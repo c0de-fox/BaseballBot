@@ -69,7 +69,7 @@ async def on_message(message):
             await bot.send_message(message.channel, "You confused me.  There's no active play so I have nothing to close!")
         else:
             play = play_dao.resolve_play(pitch_value, swing_value)
-            guess_dao.set_diff  erences(pitch_value, play['play_id'])
+            guess_dao.set_differences(pitch_value, play['play_id'])
 
             await bot.send_message(message.channel,
                                    "You got it boss.  Closed this play, no further guesses allowed!")
