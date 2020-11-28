@@ -5,7 +5,6 @@ from src.main.database_module.database_classes.db_classes import Play
 
 PLAY_ID = 'play_id'
 PITCH_VALUE = 'pitch_value'
-SWING_VALUE = 'swing_value'
 CREATION_DATE = 'creation_date'
 
 class PlayDAO():
@@ -23,7 +22,6 @@ class PlayDAO():
         play = Play(
             play_id = play_info[PLAY_ID],
             pitch_value = play_info[PITCH_VALUE] if PITCH_VALUE in play_info else None,
-            swing_value = play_info[SWING_VALUE] if SWING_VALUE in play_info else None,
             creation_date = play_info[CREATION_DATE]
         )
 
@@ -51,14 +49,14 @@ class PlayDAO():
         else:
             return plays[0]
 
-    def resolve_play(self, input_pitch, input_swing):
+    def resolve_play(self, input_pitch):
         session = DatabaseSession.session
         active_id = self.get_active_play()
 
         session\
             .query(Play)\
             .filter(Play.pitch_value == None)\
-            .update({Play.pitch_value: input_pitch, Play.swing_value: input_swing})
+            .update({Play.pitch_value: input_pitch})
         session.commit()
 
         return active_id

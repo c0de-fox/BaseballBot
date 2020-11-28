@@ -73,7 +73,6 @@ class GuessDAO():
         else:
             return possible_value
 
-
     def fetch_closest(self, num_to_fetch):
         session = DatabaseSession.session
 

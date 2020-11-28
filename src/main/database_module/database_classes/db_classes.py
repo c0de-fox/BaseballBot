@@ -13,7 +13,6 @@ class Play(Base):
 
     play_id = Column(String, nullable=False, primary_key=True)
     pitch_value = Column(Integer, nullable=True)
-    swing_value = Column(Integer, nullable=False)
     creation_date = Column(Date, nullable=False)
 
     guesses = relationship(lambda : Guess)
