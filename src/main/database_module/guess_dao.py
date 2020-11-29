@@ -82,3 +82,22 @@ class GuessDAO():
                 .order_by(Guess.difference)\
                 .limit(num_to_fetch)
         )
+
+    def get_closest_on_play(self, play):
+        session = DatabaseSession.session
+
+        # TODO: Make this a MAX query for ties
+        converted_guesses = self.__convert_all__(
+            session
+                .query(Guess)
+                .filter(Guess.play_id == play)
+                .order_by(Guess.difference)
+                .limit(1)
+        )
+
+        if len(converted_guesses) > 1:
+            raise AssertionError("More than one best guess!  Can't continue!")
+        elif len(converted_guesses) == 0:
+            return None
+        else:
+            return converted_guesses[0]
