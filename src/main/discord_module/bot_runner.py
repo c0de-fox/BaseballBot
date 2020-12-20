@@ -1,17 +1,22 @@
 import sys
 
 import discord
+from discord.utils import get
+
 import uuid
 import datetime
+import dateparser
 
 from src.main.configs import Configs
 from src.main.database_module.guess_dao import GuessDAO, GUESSED_NUMBER, MEMBER_ID, MEMBER_NAME, DIFFERENCE
-from src.main.database_module.play_dao import PlayDAO, PLAY_ID, CREATION_DATE
+from src.main.services.points_service import PointsService
+from src.main.database_module.play_dao import PlayDAO, PLAY_ID, CREATION_DATE, SERVER_ID
 from src.main.db_session import DatabaseSession
 from src.main.discord_module.leaderboard_config import LeaderboardConfig
 
 play_dao = None
 guess_dao = None
+points_service = PointsService()
 bot = discord.Client()
 
 
@@ -29,26 +34,28 @@ async def on_message(message):
         return
 
     content = message.content
+    server_id = message.guild.id
 
     '''
         Sets up the next set of guesses. 
     '''
     if content.startswith('!ghostball'):
-        if play_dao.is_active_play():
+        if play_dao.is_active_play(server_id):
             await message.channel.send("There's already an active play.  Could you close that one first, please?")
         else:
-            play_object = {PLAY_ID: uuid.uuid4(), CREATION_DATE: datetime.datetime.now()}
+            generated_play_id = uuid.uuid4()
+            play_object = {PLAY_ID: generated_play_id, CREATION_DATE: datetime.datetime.now(), SERVER_ID: server_id}
             play_dao.insert(play_object)
 
-            await message.channel.send("@flappyball, pitch is in!  Send me your guesses with a !guess command.")
+            await message.channel.send("@flappy ball, pitch is in!  Send me your guesses with a !guess command.")
 
     if content.startswith("!guess"):
         guess_value = __parse_guess__(content)
 
-        if not play_dao.is_active_play():
+        if not play_dao.is_active_play(server_id):
             await message.channel.send("Hey, there's no active play!  Start one up first with !ghostball.")
         else:
-            play = play_dao.get_active_play()
+            play = play_dao.get_active_play(server_id)
             guess_object = {PLAY_ID: play['play_id'],
                             MEMBER_ID: str(message.author.id),
                             GUESSED_NUMBER: guess_value,
@@ -60,52 +67,62 @@ async def on_message(message):
     # Closes off the active play to be ready for the next set
     if content.startswith('!resolve'):
         # try:
-        pitch_value = __parse_resolve_play__(content)
-        if pitch_value is None:
+        args, has_batter = __parse_resolve_play__(content)
+        if args is None:
             await message.channel.send("Hey " + "<@" + str(message.author.id) + ">, I'm not sure what you meant. "
                                                                                 "You need real, numeric, values for this command to work.  "
-                                                                                "Use !resolve <pitch number> and try again.")
+                                                                                "Use !resolve <pitch number> <optional batter> <optional swing number>"
+                                                                                " and try again.")
 
         # Check if we have an active play
-        if not play_dao.is_active_play():
+        if not play_dao.is_active_play(server_id):
             await message.channel.send("You confused me.  There's no active play so I have nothing to close!")
         else:
-            play = play_dao.resolve_play(pitch_value)
+            if has_batter:
+                referenced_member_id = args[1][3:-1]
+                play = play_dao.get_active_play(server_id)
+                guess_object = {PLAY_ID: play['play_id'],
+                                MEMBER_ID: str(referenced_member_id),
+                                GUESSED_NUMBER: args[2],
+                                MEMBER_NAME: bot.get_user(int(referenced_member_id)).name}
+
+                guess_dao.insert(guess_object)
+
+            pitch_value = args[0]
+            play = play_dao.resolve_play(pitch_value, server_id)
             guess_dao.set_differences(pitch_value, play['play_id'])
-            closest_guess = guess_dao.get_closest_on_play(play['play_id'])
+            guesses = points_service.fetch_sorted_guesses_by_play(guess_dao, play['play_id'])
 
-            await message.channel.send(
-                "Closed this play! " + "<@" + str(closest_guess[MEMBER_ID]) +
-                "> was the closest with a guess of " + closest_guess[GUESSED_NUMBER] +
-                " resulting in a difference of " + closest_guess[DIFFERENCE] + ".")
+            response_message = "Closed this play! Here are the results:\n"
+            response_message += "PLAYER --- DIFFERENCE --- POINTS GAINED\n"
+            for guess in guesses:
+                response_message += guess[1] + " --- " + str(guess[2]) + " --- " + str(guess[3]) + "\n"
 
-        # Likely due to too few parameters but could be any number of things
-        # except :
-        #     await message.channel.send( "Hey " + "<@" + str(message.author.id) + ">, you confused me with that message.  "
-        #                             "To close an active pitch, the proper command is !resolve <pitch number> <swing_number>.  "
-        #                             "Use that format and try again, ok?")
+            response_message += "\nCongrats to <@" + str(guesses[0][0]) + "> for being the closest! \n"
+            response_message += "And tell <@" + str(guesses[-1][0]) + "> they suck."
 
-    if content.startswith('!leaderboard'):
-        leaderboard_config = __parse_leaderboard_message__(content)
-
-        if leaderboard_config.should_sort_by_pure_closest():
-            values = guess_dao.fetch_closest(10)
-
-            string_to_send = ''
-            for i, value in enumerate(values):
-                string_to_send += str(i + 1) + ': ' + value['member_name'] + ', ' + value['difference'] + '\n'
-
-            await message.channel.send(string_to_send)
-
-        elif leaderboard_config.should_sort_by_best_average():
-            pass
-        else:
-            await message.channel.send(
-                "I don't understand that leaderboard command, sorry!  I know it's a little confusing, so send me"
-                " a !help message if you want the full rundown for how to make this work!")
+            await message.channel.send(response_message)
 
     if content.startswith("!points"):
-        pass #TODO
+        try:
+            timestamp = __parse_points_message__(content)
+        except:
+            await message.channel.send("You gave me a timestamp that was so bad, the best date handling library in the"
+                                       " world of software couldn't figure out what you meant.  That's...impressive.  Now"
+                                       " fix your shit and try again.")
+            return
+
+        points_by_user = points_service.fetch_points(timestamp, server_id, play_dao, guess_dao)
+        response = "Here are the top guessers by points as per your request..."
+        for user in points_by_user:
+            response += "\n" + str(user[1]) + " : " + str(user[2])
+
+        await message.channel.send(response)
+
+    # Refresh Postgres connection
+    if content.startswith('!restart'):
+        play_dao.refresh()
+        guess_dao.refresh()
 
     if content.startswith('!help'):
         help_message = __get_help_message__()
@@ -120,15 +137,34 @@ def __get_help_message__():
                    "I will give you a thumbs up if everything worked!\n" \
                    "!ghostball --- Starts a new play. I'll let you know if this didn't work for some reason!\n" \
                    "!help --- You just asked for this.  If you ask for it again, I'll repeat myself.\n" \
-                   "!resolve <PITCH_NUMBER> --- Uses the pitch number and real swing number " \
-                   "to figure out who was closest and ends the active play.\n" \
-                   "<HELP MESSAGE NEEDS DOCUMENTATION FOR LEADERBOARD COMMAND!  PING KALI IF YOU'RE ANGRY!>\n"
+                   "!resolve <PITCH_NUMBER> <OPTIONAL --- BATTER by @-mention> <OPTIONAL - ACTUAL SWING NUMBER> --- " \
+                   "Uses the pitch number and real swing number to figure out who was closest and ends the active play." \
+                   "If you include the batter and their swing number, they will get credit for how well they did!\n" \
+                   "!points <OPTIONAL --- TIMESTAMP> Fetches all plays since your requested time, or the beginning of the unvierse " \
+                   "if none given.  Will currently always dump all players - top X coming soon...\n" \
+                   "!restart --- If the bot looks broken, this will take a shot at fixing it.  It won't answer your commands " \
+                   "for about 3 seconds after you do this! BE CAREFUL!  ONLY USE IN AN EMERGENCY!\n" \
+                   "<PING KALI IF YOU'RE CONFUSED, ANGRY, OR WANT TO GEEK OUT ABOUT BRAVELY DEFAULT!>\n"
 
     return help_message
 
 
 def __parse_leaderboard_message__(message_content):
     return LeaderboardConfig(message_content)
+
+
+def __parse_points_message__(message_content):
+    pieces = message_content.split(' ')
+
+    if len(pieces) > 1:
+        try:
+            timestamp = dateparser.parse(pieces[1])
+        except:
+            raise RuntimeError("Unable to parse timestamp!")
+    else:
+        timestamp = dateparser.parse("1970-01-01")
+
+    return timestamp
 
 
 def __parse_guess__(message_content):
@@ -140,11 +176,17 @@ def __parse_guess__(message_content):
 
 
 def __parse_resolve_play__(message_content):
-    pieces = message_content.split(' ')
+    pieces = message_content.split()
     try:
-        return pieces[1]
+        if len(pieces) == 2:
+            return [pieces[1]], False
+        elif len(pieces) == 4:
+            return [pieces[1], pieces[2], pieces[3]], True
+        else:
+            print("Illegal resolution command")
+            return None, None
     except TypeError:
-        return None
+        return None, None
 
 
 if __name__ == '__main__':

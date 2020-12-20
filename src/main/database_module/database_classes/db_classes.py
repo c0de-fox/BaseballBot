@@ -1,10 +1,7 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
-
-from src.main.db_session import DatabaseSession
 
 Base = declarative_base()
 
@@ -14,6 +11,7 @@ class Play(Base):
     play_id = Column(String, nullable=False, primary_key=True)
     pitch_value = Column(Integer, nullable=True)
     creation_date = Column(Date, nullable=False)
+    server_id = Column(String, nullable=False)
 
     guesses = relationship(lambda : Guess)
 

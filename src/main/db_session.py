@@ -17,13 +17,28 @@ and then use it to handle the necessary CRUD operations.
 You should NOT instantiate this in any method except the main application runner
 '''
 class DatabaseSession():
-    session = None
+    _session = None
 
     def __init__(self):
+        self.__create_new_session__()
+
+    def __create_new_session__(self):
+        if self._session is not None:
+            self._session.close()
+
         config_map = Configs.configs
         db_string = self._pgsql_conn_string_(config_map)
         Session = sessionmaker(create_engine(db_string))
-        DatabaseSession.session = Session()
+        self._session = Session()
+
+        return self._session
+
+    def get_or_create_session(self):
+        try:
+            self._session.connection()
+            return self._session
+        except: # The linter can scream all it wants, this makes sense.  If it's this broke, we want a new one anyway.
+            return self.__create_new_session__()
 
     # Look, this kinda sucks.  But it's for fun and friends and I'm doing it quick and dirty.
     def _pgsql_conn_string_(self, config_map):
