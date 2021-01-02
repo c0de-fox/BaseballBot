@@ -38,6 +38,9 @@ class PointsService():
 
     # Iterates through the point table, which we assume is sorted, and gets the points
     def __get_points_for_diff__(self, diff):
+        if diff == 'None':
+            return 0
+
         for i in range(0, len(self._point_table)):
             if int(diff) < self._point_table[i][0]:
                 return self._point_table[i][1]

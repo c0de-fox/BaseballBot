@@ -76,7 +76,7 @@ async def on_message(message):
     # Closes off the active play to be ready for the next set
     if content.startswith('!resolve'):
         # try:
-        args, has_batter = __parse_resolve_play__(content)
+        pitch_number, batter_id, batter_guess, has_batter = __parse_resolve_play__(content)
         if args is None:
             await message.channel.send("Hey " + "<@" + str(message.author.id) + ">, I'm not sure what you meant. "
                                                                                 "You need real, numeric, values for this command to work.  "
@@ -88,18 +88,17 @@ async def on_message(message):
             await message.channel.send("You confused me.  There's no active play so I have nothing to close!")
         else:
             if has_batter:
-                referenced_member_id = args[1][3:-1]
+                referenced_member_id = batter_id[3:-1]
                 play = play_dao.get_active_play(server_id)
                 guess_object = {PLAY_ID: play['play_id'],
                                 MEMBER_ID: str(referenced_member_id),
-                                GUESSED_NUMBER: args[2],
+                                GUESSED_NUMBER: batter_guess,
                                 MEMBER_NAME: bot.get_user(int(referenced_member_id)).name}
 
-                guess_dao.insert(guess_object)
+                guess_dao.insert(guess_object, True)
 
-            pitch_value = args[0]
-            play = play_dao.resolve_play(pitch_value, server_id)
-            guess_dao.set_differences(pitch_value, play['play_id'])
+            play = play_dao.resolve_play(pitch_number, server_id)
+            guess_dao.set_differences(pitch_number, play['play_id'])
             guesses = points_service.fetch_sorted_guesses_by_play(guess_dao, play['play_id'])
 
             response_message = "Closed this play! Here are the results:\n"
@@ -124,11 +123,12 @@ async def on_message(message):
                                        " world of software couldn't figure out what you meant.  That's...impressive.  Now"
                                        " fix your shit and try again.")
             return
-
+        
         points_by_user = points_service.fetch_points(timestamp, server_id, play_dao, guess_dao)
         response = "Here are the top guessers by points as per your request..."
         for user in points_by_user:
-            response += "\n" + str(user[1]) + " : " + str(user[2])
+            if str(user[2]) != '0':
+                response += "\n" + str(user[1]) + " : " + str(user[2])
 
         await message.channel.send(response)
 
@@ -197,9 +197,9 @@ def __parse_resolve_play__(message_content):
     pieces = message_content.split()
     try:
         if len(pieces) == 2:
-            return [pieces[1]], False
+            return pieces[1], None, None, False
         elif len(pieces) == 4:
-            return [pieces[1], pieces[2], pieces[3]], True
+            return pieces[1], pieces[2], pieces[3], True
         else:
             print("Illegal resolution command")
             return None, None
