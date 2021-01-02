@@ -21,7 +21,7 @@ class GuessDAO():
     def __init__(self):
         self._database_session = DatabaseSession()
 
-    def insert(self, guess_info):
+    def insert(self, guess_info, allow_update=False):
         session = self._database_session.get_or_create_session()
 
         guess = Guess(
@@ -38,6 +38,12 @@ class GuessDAO():
         if len(existing_guess) == 0:
             session.add(guess)
             session.commit()
+            return True
+        elif allow_update:
+            session\
+                .query(Guess)\
+                .filter(Guess.member_id == guess_info[MEMBER_ID], Guess.play_id == guess_info[PLAY_ID], Guess.member_name == guess_info[MEMBER_NAME])\
+                .update({Guess.guessed_number: guess_info[GUESSED_NUMBER]})
             return True
         else:
             return False

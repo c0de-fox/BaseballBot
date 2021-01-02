@@ -50,7 +50,16 @@ async def on_message(message):
             await message.channel.send("@flappy ball, pitch is in!  Send me your guesses with a !guess command.")
 
     if content.startswith("!guess"):
-        guess_value = __parse_guess__(content)
+        guess_value = None
+        try:
+            guess_value = __parse_guess__(content)
+        except ValueError:
+            await message.channel.send("That number is not between 1 and 1000.  We're still in MLN so don't try to cheat.")
+            return
+
+        if guess_value is None:
+            await message.channel.send("I don't know what you did but I'm pretty sure you're tyring to break the bot so please stop.")
+            return
 
         if not play_dao.is_active_play(server_id):
             await message.channel.send("Hey, there's no active play!  Start one up first with !ghostball.")
@@ -61,7 +70,7 @@ async def on_message(message):
                             GUESSED_NUMBER: guess_value,
                             MEMBER_NAME: str(message.author.name)}
 
-            if guess_dao.insert(guess_object):
+            if guess_dao.insert(guess_object, allow_update=True):
                 await message.add_reaction(emoji="\N{THUMBS UP SIGN}")
 
     # Closes off the active play to be ready for the next set
@@ -98,8 +107,12 @@ async def on_message(message):
             for guess in guesses:
                 response_message += guess[1] + " --- " + str(guess[2]) + " --- " + str(guess[3]) + "\n"
 
-            response_message += "\nCongrats to <@" + str(guesses[0][0]) + "> for being the closest! \n"
-            response_message += "And tell <@" + str(guesses[-1][0]) + "> they suck."
+            if len(guesses) < 2:
+                response_message += "Not enough people participated to give best and worst awards.  Stop being lazy."
+
+            else:
+                response_message += "\nCongrats to <@" + str(guesses[0][0]) + "> for being the closest! \n"
+                response_message += "And tell <@" + str(guesses[-1][0]) + "> they suck."
 
             await message.channel.send(response_message)
 
@@ -170,7 +183,12 @@ def __parse_points_message__(message_content):
 def __parse_guess__(message_content):
     pieces = message_content.split(' ')
     try:
-        return pieces[1]
+        guess_value = pieces[1]
+        guess_as_int = int(guess_value)
+        if guess_as_int > 1000 or guess_as_int < 1:
+            raise ValueError("Number not between 1 and 1000 inclusive")
+        else:
+            return guess_value
     except TypeError:
         return None
 
