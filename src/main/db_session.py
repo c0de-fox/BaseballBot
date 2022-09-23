@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 import sys
 import sqlite3
-sys.path.append('../../../../../src')
+sys.path.append('../../../../../../src')
 
 from src.main.configs import Configs, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_HOST, DATABASE_NAME
 

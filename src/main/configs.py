@@ -2,11 +2,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_USERNAME = 'database_username'
-DATABASE_PASSWORD = 'database_password'
-DATABASE_HOST = 'database_host'
-DATABASE_PORT = 'database_port'
-DATABASE_NAME = 'database_name'
+DATABASE_USERNAME = 'ghost_user'
+DATABASE_PASSWORD = 'root'
+DATABASE_HOST = '192.168.0.11'
+DATABASE_PORT = '5432'
+DATABASE_NAME = 'ghostball'
 SEASON_1_SPREADSHEET_ID = 's1_spreadsheet_id'
 SEASON_2_SPREADSHEET_ID = 's2_spreadsheet_id'
 PLAYER_SPREADSHEET = 'player_spreadsheet'
