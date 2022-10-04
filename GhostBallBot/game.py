@@ -6,7 +6,7 @@ import uuid
 
 import dateparser
 
-from .database.models import database, GameModel, GuessModel
+from database.models import database, GameModel, GuessModel
 
 class Game:
     """

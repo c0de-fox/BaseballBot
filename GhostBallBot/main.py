@@ -5,11 +5,11 @@
 import os
 from pathlib import Path
 
-from .discord_client import client
-from .database.models import DATABASE, database, create_models
+from discord_client.client import GhostBallClient
+from database.models import DATABASE, database, create_models
 
 if __name__ == '__main__':
-    client = GhostBallClient()
+    client = GhostBallClient(intents=None)
     client.run(os.environ.get('discord_token'))
 
     # Set up the database if we haven't already
