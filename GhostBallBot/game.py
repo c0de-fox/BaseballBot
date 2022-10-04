@@ -91,9 +91,25 @@ class Game:
         database.close()
 
     async def guess(self):
+        if not self.is_running:
+            return await self.message.channel.send("There is no game running to add guesses to")
+
+        value = int(self.message.content.split()[1])
+        if value < 1 or value > 1000:
+            return await self.message.channel.send(f"Invalid value. It must be between 1 and 1000 inclusive")
+
         database.connect()
 
+        GuessModel.create(
+            game_id = self.game.game_id,
+            player_id = self.message.author.id,
+            player_name = self.message.author.name,
+            guess = value
+        )
+
         database.close()
+
+        return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
 
     async def points(self):
         database.connect()
