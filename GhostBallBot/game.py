@@ -27,7 +27,7 @@ class Game:
             'help': self.help,
         }
 
-        self.game = None
+        self.game = GameModel
 
         # Discord message
         self.message = None
