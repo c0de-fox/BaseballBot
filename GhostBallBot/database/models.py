@@ -29,7 +29,7 @@ class GameModel(BaseModel):
 class GuessModel(BaseModel):
 
     player_id = IntegerField(primary_key=True)
-    game_id   = ForeignKeyField(Game, backref="guesses")
+    game_id   = ForeignKeyField(GameModel, backref="guesses")
 
     player_name = CharField()
     guess = IntegerField()
