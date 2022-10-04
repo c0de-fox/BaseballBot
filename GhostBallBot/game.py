@@ -4,6 +4,8 @@
 
 import uuid
 
+import dateparser
+
 from .database.models import database, GameModel, GuessModel
 
 class Game:
@@ -85,6 +87,8 @@ class Game:
 
         # TODO: Determine differences
 
+        await self.message.channel.send("Difference calculation is not currently available")
+
         # stop and discard game
         self.is_running = False
         self.game = None
@@ -112,9 +116,18 @@ class Game:
         return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
 
     async def points(self):
-        database.connect()
+        # database.connect()
 
-        database.close()
+        value = self.message.content.split()
+        try:
+            if len(value) > 1:
+                timestamp = dateparser.parse(value[1])
+        except:
+            return await self.message.channel.send("Invalid timestamp. Try again")
+
+        # database.close()
+
+        return await self.message.channel.send("Sorry, not implemented yet")
 
     async def help(self):
         # TODO: Add help message
