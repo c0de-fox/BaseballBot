@@ -41,4 +41,4 @@ class GuessModel(BaseModel):
 
 def create_models():
     with database:
-        database.create_tables([Play, Guess])
+        database.create_tables([GameModel, GuessModel])
