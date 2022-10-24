@@ -21,7 +21,7 @@ class BaseModel(Model):
 class GameModel(BaseModel):
 
     game_id = UUIDField(primary_key=True)
-    server_id = UUIDField() # Unsure if this is actually a uuid
+    server_id = IntegerField()
 
     pitch_value = IntegerField(null=True)
     date_created = DateTimeField(default=datetime.datetime.now)
