@@ -8,6 +8,23 @@ import dateparser
 
 from database.models import database, GameModel, GuessModel
 
+async def check_is_running(method, start_new_game=True):
+    """
+    Decorator that determines if the game is running or not
+    """
+
+    async def wrapper(self):
+
+        if self.is_running and start_new_game:
+            return await self.message.channel.send("A game is already running")
+        elif not self.is_running and not start_new_game:
+            return await self.message.channel.send(
+                "There is no game running to add guesses to"
+            )
+
+        await method(self)
+
+    return await wrapper
 
 class Game:
     """
@@ -51,24 +68,6 @@ class Game:
         when this class has ended execution
         """
         database.close()
-
-    async def check_is_running(method, start_new_game=True):
-        """
-        Decorator that determines if the game is running or not
-        """
-
-        async def wrapper(self):
-
-            if self.is_running and start_new_game:
-                return await self.message.channel.send("A game is already running")
-            elif not self.is_running and not start_new_game:
-                return await self.message.channel.send(
-                    "There is no game running to add guesses to"
-                )
-
-            await method(self)
-
-        return await wrapper
 
     @check_is_running
     async def start(self):
