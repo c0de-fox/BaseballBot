@@ -2,10 +2,24 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
+# pylint: disable=too-few-public-methods
+
+"""
+    An implementation of a SQLite database
+"""
+
 import os
 import datetime
 
-from peewee import *
+from peewee import (
+    SqliteDatabase,
+    Model,
+    UUIDField,
+    IntegerField,
+    CharField,
+    DateTimeField,
+    ForeignKeyField,
+)
 
 # User can provide path to database, or it will be put next to main.py
 DATABASE = os.environ.get("database_path", os.getcwd() + "/ghostball.db")
@@ -17,10 +31,13 @@ class BaseModel(Model):
     and use the same database connection"""
 
     class Meta:
+        """meta"""
+
         database = database
 
 
 class GameModel(BaseModel):
+    """Games that are ran"""
 
     game_id = UUIDField(primary_key=True)
     server_id = IntegerField()
@@ -31,6 +48,7 @@ class GameModel(BaseModel):
 
 
 class GuessModel(BaseModel):
+    """Guesses for a particular game"""
 
     player_id = IntegerField(primary_key=True)
     game_id = ForeignKeyField(GameModel, backref="guesses")
@@ -45,5 +63,7 @@ class GuessModel(BaseModel):
 
 
 def create_models():
+    """Create database tables"""
+
     with database:
         database.create_tables([GameModel, GuessModel])
