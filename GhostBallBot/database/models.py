@@ -25,6 +25,7 @@ class GameModel(BaseModel):
 
     pitch_value = IntegerField(null=True)
     date_created = DateTimeField(default=datetime.datetime.now)
+    date_ended = DateTimeField(null=True)
 
 class GuessModel(BaseModel):
 
@@ -34,6 +35,7 @@ class GuessModel(BaseModel):
     player_name = CharField()
     guess = IntegerField()
     difference = IntegerField(null=True)
+    date_guessed = DateTimeField(null=True)
 
     # TODO: Add unique constraint for player_id and game_id
     # ie: one guess per player allowed per game
