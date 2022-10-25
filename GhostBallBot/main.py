@@ -2,8 +2,9 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
+# pylint: disable=missing-module-docstring
+
 import os
-from pathlib import Path
 
 from discord_client.client import GhostBallClient
 from database.models import DATABASE, database, create_models
