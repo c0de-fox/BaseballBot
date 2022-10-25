@@ -15,8 +15,8 @@ class GhostBallClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super(GhostBallClient, self).__init__(*args, **kwargs)
 
-        self.game = game.Game()
-        self.game.discord = self
+        with game.Game() as self.game:
+            self.game.discord = self
 
     async def on_ready(self):
         print("Logged on as", self.user)

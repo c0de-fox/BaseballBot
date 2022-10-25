@@ -13,9 +13,15 @@ class Game:
         The game state class
 
         This represents a game that exists in a channel
-    """
+    """    
 
-    def __init__(self):
+    def __enter__(self):
+        """
+            Allows use of `with Game as game` for try/except statements
+
+            We are using this instead of __init__, they work very similar
+            to each other (https://peps.python.org/pep-0343/)
+        """
         # Only one game should run at at time
         self.is_running = False
 
@@ -36,18 +42,32 @@ class Game:
         self.discord = None
 
         database.connect()
+        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exception_type, exception_value, exception_traceback):
         """
             Automagically close the database
             when this class has ended execution
         """
         database.close()
 
+    async def check_is_running(method, start_new_game=True):
+        """
+            Decorator that determines if the game is running or not
+        """
+        async def wrapper(self):
+
+            if self.is_running and start_new_game:
+                return await self.message.channel.send("A game is already running")
+            elif not self.is_running and not start_new_game:
+                return await self.message.channel.send("There is no game running to add guesses to")
+
+            await method(self)
+
+        return await wrapper
+
+    @check_is_running
     async def start(self):
-        if self.is_running:
-            return await self.message.channel.send("A game is already running")
-        
         self.is_running = True
 
         # game.pitch_value is unknown at the start of the game
@@ -68,10 +88,8 @@ class Game:
 
         return None, False, None, None
 
+    @check_is_running(start_new_game=False)
     async def stop(self):
-        if not self.is_running:
-            return await self.message.channel.send("There is no game running to resolve")
-
         # Determine arguments
         pitch_value, has_batter, batter_id, batter_guess = self.__stopArgs__()
         if not pitch_value:
@@ -97,10 +115,8 @@ class Game:
         self.is_running = False
         self.game = None
 
+    @check_is_running(start_new_game=False)
     async def guess(self):
-        if not self.is_running:
-            return await self.message.channel.send("There is no game running to add guesses to")
-
         value = int(self.message.content.split()[1])
         if value < 1 or value > 1000:
             return await self.message.channel.send(f"Invalid value. It must be between 1 and 1000 inclusive")
