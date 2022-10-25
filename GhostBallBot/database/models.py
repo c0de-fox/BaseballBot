@@ -54,7 +54,7 @@ class GuessModel(BaseModel):
     game_id = ForeignKeyField(GameModel, backref="guesses")
 
     player_name = CharField()
-    guess = IntegerField()
+    guess = IntegerField(default=0)
     difference = IntegerField(null=True)
     date_guessed = DateTimeField(null=True)
 
