@@ -7,11 +7,11 @@ import sys
 import discord
 
 # Import game functions
-sys.path.append('..')
+sys.path.append("..")
 import game
 
-class GhostBallClient(discord.Client):
 
+class GhostBallClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super(GhostBallClient, self).__init__(*args, **kwargs)
 
@@ -31,7 +31,7 @@ class GhostBallClient(discord.Client):
             await message.channel.send("pong")
 
         # Game commands
-        if message.content.startswith('!'):
+        if message.content.startswith("!"):
             firstword = message.content[1:].split()[0]
 
             # Determine if the first word is a command, and run it

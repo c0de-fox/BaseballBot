@@ -8,15 +8,17 @@ import datetime
 from peewee import *
 
 # User can provide path to database, or it will be put next to main.py
-DATABASE = os.environ.get('database_path', os.getcwd() + '/ghostball.db')
+DATABASE = os.environ.get("database_path", os.getcwd() + "/ghostball.db")
 database = SqliteDatabase(DATABASE)
+
 
 class BaseModel(Model):
     """All of our models will inherit this class
-       and use the same database connection"""
+    and use the same database connection"""
 
     class Meta:
         database = database
+
 
 class GameModel(BaseModel):
 
@@ -27,10 +29,11 @@ class GameModel(BaseModel):
     date_created = DateTimeField(default=datetime.datetime.now)
     date_ended = DateTimeField(null=True)
 
+
 class GuessModel(BaseModel):
 
     player_id = IntegerField(primary_key=True)
-    game_id   = ForeignKeyField(GameModel, backref="guesses")
+    game_id = ForeignKeyField(GameModel, backref="guesses")
 
     player_name = CharField()
     guess = IntegerField()

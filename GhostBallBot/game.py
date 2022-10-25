@@ -8,29 +8,30 @@ import dateparser
 
 from database.models import database, GameModel, GuessModel
 
+
 class Game:
     """
-        The game state class
+    The game state class
 
-        This represents a game that exists in a channel
-    """    
+    This represents a game that exists in a channel
+    """
 
     def __enter__(self):
         """
-            Allows use of `with Game as game` for try/except statements
+        Allows use of `with Game as game` for try/except statements
 
-            We are using this instead of __init__, they work very similar
-            to each other (https://peps.python.org/pep-0343/)
+        We are using this instead of __init__, they work very similar
+        to each other (https://peps.python.org/pep-0343/)
         """
         # Only one game should run at at time
         self.is_running = False
 
         self.commands = {
-            'ghostball': self.start,
-            'resolve': self.stop,
-            'guess': self.guess,
-            'points': self.points,
-            'help': self.help,
+            "ghostball": self.start,
+            "resolve": self.stop,
+            "guess": self.guess,
+            "points": self.points,
+            "help": self.help,
         }
 
         self.game = GameModel
@@ -46,21 +47,24 @@ class Game:
 
     def __exit__(self, exception_type, exception_value, exception_traceback):
         """
-            Automagically close the database
-            when this class has ended execution
+        Automagically close the database
+        when this class has ended execution
         """
         database.close()
 
     async def check_is_running(method, start_new_game=True):
         """
-            Decorator that determines if the game is running or not
+        Decorator that determines if the game is running or not
         """
+
         async def wrapper(self):
 
             if self.is_running and start_new_game:
                 return await self.message.channel.send("A game is already running")
             elif not self.is_running and not start_new_game:
-                return await self.message.channel.send("There is no game running to add guesses to")
+                return await self.message.channel.send(
+                    "There is no game running to add guesses to"
+                )
 
             await method(self)
 
@@ -72,11 +76,12 @@ class Game:
 
         # game.pitch_value is unknown at the start of the game
         self.game = GameModel.create(
-            game_id = uuid.uuid4(),
-            server_id = self.message.guild.id
+            game_id=uuid.uuid4(), server_id=self.message.guild.id
         )
 
-        await self.message.send("@flappy ball, pitch is in! Send me your guesses with !guess <number>")
+        await self.message.send(
+            "@flappy ball, pitch is in! Send me your guesses with !guess <number>"
+        )
 
     def __stopArgs__(self):
         pieces = self.message.content.split()
@@ -93,23 +98,27 @@ class Game:
         # Determine arguments
         pitch_value, has_batter, batter_id, batter_guess = self.__stopArgs__()
         if not pitch_value:
-            return await self.message.channel.send(f"Invalid command <@{ str(self.message.author.id) }>!")
+            return await self.message.channel.send(
+                f"Invalid command <@{ str(self.message.author.id) }>!"
+            )
 
         if has_batter:
             player_id = batter_id[3:]
             GuessModel.create(
-                game_id = self.game.game_id,
-                player_id = player_id,
-                player_name = self.discord.get_user(int(player_id).name),
-                guess = int(batter_guess)
+                game_id=self.game.game_id,
+                player_id=player_id,
+                player_name=self.discord.get_user(int(player_id).name),
+                guess=int(batter_guess),
             )
 
         # Save the pitch value
-        self.game.update({'pitch_value': pitch_value})
+        self.game.update({"pitch_value": pitch_value})
 
         # TODO: Determine differences
 
-        await self.message.channel.send("Difference calculation is not currently available")
+        await self.message.channel.send(
+            "Difference calculation is not currently available"
+        )
 
         # stop and discard game
         self.is_running = False
@@ -119,13 +128,15 @@ class Game:
     async def guess(self):
         value = int(self.message.content.split()[1])
         if value < 1 or value > 1000:
-            return await self.message.channel.send(f"Invalid value. It must be between 1 and 1000 inclusive")
+            return await self.message.channel.send(
+                f"Invalid value. It must be between 1 and 1000 inclusive"
+            )
 
         GuessModel.create(
-            game_id = self.game.game_id,
-            player_id = self.message.author.id,
-            player_name = self.message.author.name,
-            guess = value
+            game_id=self.game.game_id,
+            player_id=self.message.author.id,
+            player_name=self.message.author.name,
+            guess=value,
         )
 
         return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
