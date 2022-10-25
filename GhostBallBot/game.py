@@ -8,6 +8,7 @@ import dateparser
 
 from database.models import database, GameModel, GuessModel
 
+
 async def check_is_running(method, start_new_game=True):
     """
     Decorator that determines if the game is running or not
@@ -25,6 +26,7 @@ async def check_is_running(method, start_new_game=True):
         await method(self)
 
     return await wrapper
+
 
 class Game:
     """
