@@ -23,7 +23,7 @@ from peewee import (
 
 # User can provide path to database, or it will be put next to main.py
 DATABASE = os.environ.get("database_path", os.getcwd() + "/ghostball.db")
-database = SqliteDatabase(DATABASE)
+database = SqliteDatabase(DATABASE, pragmas={"foreign_keys": 1})
 
 
 class BaseModel(Model):
@@ -34,6 +34,22 @@ class BaseModel(Model):
         """meta"""
 
         database = database
+
+
+class PlayerModel(BaseModel):
+    """Need to keep track of total player score"""
+
+    player_id = IntegerField(primary_key=True)
+    player_name = CharField()
+
+    total_points = IntegerField(default=0)
+    date_joined = DateTimeField(default=datetime.datetime.now)
+    last_update = DateTimeField(null=True)
+
+    def save(self, *args, **kwargs):
+        """Should set the last update everytime the record is saved"""
+        self.last_update = datetime.datetime.now()
+        super().save(*args, **kwargs)
 
 
 class GameModel(BaseModel):
@@ -50,17 +66,14 @@ class GameModel(BaseModel):
 class GuessModel(BaseModel):
     """Guesses for a particular game"""
 
-    player_id = IntegerField(primary_key=True)
+    guess_id = UUIDField(primary_key=True)
+
+    player = ForeignKeyField(PlayerModel, backref="guesses")
     game_id = ForeignKeyField(GameModel, backref="guesses")
 
-    player_name = CharField()
     guess = IntegerField(default=0)
     difference = IntegerField(null=True)
     date_guessed = DateTimeField(null=True)
-
-    # TODO: Add unique constraint for player_id and game_id
-    # ie: one guess per player allowed per game
-
 
 def create_models():
     """Create database tables"""
