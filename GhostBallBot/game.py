@@ -11,10 +11,16 @@
 """
 
 import uuid
+import datetime
 
 # import dateparser
 
-from database.models import database, GameModel, GuessModel
+from database.models import (
+    database,
+    GameModel as Game,
+    GuessModel as Guess,
+    PlayerModel as Player,
+)
 
 
 async def check_is_running(method, start_new_game=True):
@@ -35,7 +41,7 @@ async def check_is_running(method, start_new_game=True):
     return await wrapper
 
 
-class Game:
+class GameManager:
     """
     The game state class
 
@@ -54,7 +60,7 @@ class Game:
             "help": self.help,
         }
 
-        self.game = GameModel
+        self.game = Game
 
         # Discord message
         self.message = None
@@ -86,9 +92,7 @@ class Game:
         self.is_running = True
 
         # game.pitch_value is unknown at the start of the game
-        self.game = GameModel.create(
-            game_id=uuid.uuid4(), server_id=self.message.guild.id
-        )
+        self.game = Game.create(game_id=uuid.uuid4(), server_id=self.message.guild.id)
 
         await self.message.send("Send me your guesses with !guess <number>")
 
@@ -103,13 +107,8 @@ class Game:
 
         return None, False, None, None
 
-    @check_is_running(stop, start_new_game=False)
-    async def stop(self):
-        """
-        Stop command - Stops the game if it is currently running,
-        saves the pitch value, and displays differences
-        """
-
+    async def close_game(self):
+        """Update game state database for closing arguments"""
         # Determine arguments
         pitch_value, has_batter, batter_id, batter_guess = self.__stop_args__()
         if not pitch_value:
@@ -119,21 +118,97 @@ class Game:
 
         if has_batter:
             player_id = batter_id[3:]
-            GuessModel.create(
+            Guess.create(
                 game_id=self.game.game_id,
                 player_id=player_id,
                 player_name=self.discord.get_user(int(player_id).name),
                 guess=int(batter_guess),
-            )
+            ).save()
 
         # Save the pitch value
-        self.game.update({"pitch_value": pitch_value})
-
-        # TODO: Determine differences
-
-        await self.message.channel.send(
-            "Difference calculation is not currently available"
+        self.game.update(
+            {
+                Game.pitch_value: pitch_value,
+                Game.date_ended: datetime.datetime.now(),
+            }
         )
+
+        return pitch_value
+
+    @check_is_running(stop, start_new_game=False)
+    async def stop(self):
+        """
+        Stop command - Stops the game if it is currently running,
+        saves the pitch value, and displays differences
+        """
+
+        pitch_value = await self.close_game()
+
+        # Start calculating difference
+
+        # Get all guesses for this game as a list of combo Guess + Player models,
+        # excluding invalid results, from lowest to highest
+        # http://docs.peewee-orm.com/en/latest/peewee/query_examples.html#joins-and-subqueries
+        records = (
+            Guess.select(
+                Guess.guess, Player.player_id, Player.player_name, Player.total_points
+            )
+            .join(Player)
+            .where(
+                (Guess.game_id == self.game.game_id)
+                & (Guess.guess > 0)
+                & (Guess.player_id == Player.player_id)
+            )
+            .order_by(Guess.guess)
+        )
+
+        # Minimum of 3 players
+        if len(records) < 2:
+            self.game = None
+            self.is_running = False
+            return await self.message.channel.send(
+                ("Play closed!\n" + "However, there were not enough participants.")
+            )
+
+        message = (
+            "Closed this play! Here are the results\n"
+            + "PLAYER | GUESS | DIFFERENCE | POINTS GAINED | TOTAL POINTS\n"
+        )
+
+        # Determine which guesses are closest and furthest from the pitch_value
+        guess_values = [record.guess for record in records]
+        closest_guess_value = min(
+            guess_values, key=lambda guess: abs(guess - pitch_value)
+        )
+        furthest_guess_value = max(
+            guess_values, key=lambda guess: abs(guess - pitch_value)
+        )
+
+        def get_difference_score():
+            # TODO: Calculate score based on scoring table
+            return 0
+
+        for record in records:
+            difference = abs(record.guess - pitch_value)
+            difference_score = get_difference_score()
+
+            # TODO: Update Guess.difference
+            # TODO: Update Player.total_points
+
+            if record.guess == closest_guess_value:
+                closest_player_id = record.player.player_id
+
+            if record.guess == furthest_guess_value:
+                furthest_player_id = record.player.player_id
+
+            message += f"{record.player.player_name} | {record.guess} | {difference} | {difference_score}"
+
+        message += (
+            f"Congrats <@{closest_player_id}>! You were the closest!\n"
+            + f"Sorry <@{furthest_player_id}>, you were way off"
+        )
+
+        await self.message.channel.send(message)
 
         # stop and discard game
         self.is_running = False
@@ -152,13 +227,13 @@ class Game:
                 "Invalid value. It must be between 1 and 1000 inclusive"
             )
 
-        player_guess, created = GuessModel.get_or_create(
+        player_guess, created = Guess.get_or_create(
             game_id=self.game.game_id,
             player_id=self.message.author.id,
             player_name=self.message.author.name,
         )
 
-        player_guess.update(guess=value)
+        player_guess.update({Guess.guess: value})
         if created:
             return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
 
