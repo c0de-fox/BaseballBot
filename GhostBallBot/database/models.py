@@ -75,8 +75,9 @@ class GuessModel(BaseModel):
     difference = IntegerField(null=True)
     date_guessed = DateTimeField(null=True)
 
+
 def create_models():
     """Create database tables"""
 
     with database:
-        database.create_tables([GameModel, GuessModel])
+        database.create_tables([GameModel, GuessModel, PlayerModel()])
