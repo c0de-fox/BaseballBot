@@ -31,7 +31,7 @@ class GhostBallClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        with game.Game() as self.game:
+        with game.GameManager() as self.game:
             self.game.discord = self
 
     async def on_ready(self):
