@@ -152,8 +152,6 @@ class Game:
                 "Invalid value. It must be between 1 and 1000 inclusive"
             )
 
-        # TODO: Check if the user tried to vote before, update their vote if so
-
         player_guess, created = GuessModel.get_or_create(
             game_id=self.game.game_id,
             player_id=self.message.author.id,
@@ -161,12 +159,12 @@ class Game:
         )
 
         player_guess.update(guess=value)
-        if not created:  # They updated their guess
-            await self.message.channel.send(
-                f"<@{ str(self.message.author.id) }> your guess has been updated"
-            )
+        if created:
+            return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
 
-        return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
+        return await self.message.channel.send(
+            f"<@{ str(self.message.author.id) }> your guess has been updated"
+        )
 
     async def points(self):
         """
