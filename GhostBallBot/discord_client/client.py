@@ -56,4 +56,4 @@ class GhostBallClient(discord.Client):
             for command, function in self.game.commands:
                 if firstword == command:
                     self.game.message = message
-                    await function(self.game)
+                    await function()
