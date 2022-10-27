@@ -139,7 +139,7 @@ class GameManager:
             }
         )
 
-        return pitch_value
+        return int(pitch_value)
 
     # @check_is_running
     async def stop(self):
@@ -169,10 +169,10 @@ class GameManager:
         )
 
         # Minimum of 3 players
-        if len(records) < 2:
+        if len(records) < 1:
             self.game = None
             self.is_running = False
-            return await self.message.channel.send(
+            await self.message.channel.send(
                 ("Play closed!\n" + "However, there were not enough participants.")
             )
 
@@ -181,13 +181,21 @@ class GameManager:
             + "PLAYER | GUESS | DIFFERENCE | POINTS GAINED | TOTAL POINTS\n"
         )
 
+        def get_difference(guess):
+            difference = abs(guess - pitch_value)
+
+            if difference > 500:
+                return 1000 - difference
+
+            return difference
+
         # Determine which guesses are closest and furthest from the pitch_value
         guess_values = [record.guess for record in records]
         closest_guess_value = min(
-            guess_values, key=lambda guess: abs(guess - pitch_value)
+            guess_values, key=lambda guess: get_difference(guess)
         )
         furthest_guess_value = max(
-            guess_values, key=lambda guess: abs(guess - pitch_value)
+            guess_values, key=lambda guess: get_difference(guess)
         )
 
         def get_difference_score():
@@ -207,10 +215,10 @@ class GameManager:
             if record.guess == furthest_guess_value:
                 furthest_player_id = record.player.player_id
 
-            message += f"{record.player.player_name} | {record.guess} | {difference} | {difference_score}"
+            message += f"{record.player.player_name} | {record.guess} | {difference} | {difference_score} | {record.player.total_points}\n"
 
         message += (
-            f"Congrats <@{closest_player_id}>! You were the closest!\n"
+            f"\nCongrats <@{closest_player_id}>! You were the closest!\n"
             + f"Sorry <@{furthest_player_id}>, you were way off"
         )
 
@@ -241,14 +249,13 @@ class GameManager:
             guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player_id
         )
 
-        player_guess.update({Guess.guess: value})
-        # if created:
-        print(dir(self.message.add_reaction))
-        return await self.message.add_reaction("\N{THUMBS UP SIGN}")
+        Guess.update({"guess": value}).where((Guess.game_id==self.game.game_id) & (Guess.player_id==player_id)).execute()
+        if created:
+            return await self.message.add_reaction("\N{THUMBS UP SIGN}")
 
-        # return await self.message.channel.send(
-        #     f"<@{ str(self.message.author.id) }> your guess has been updated"
-        # )
+        return await self.message.channel.send(
+            f"<@{ str(self.message.author.id) }> your guess has been updated"
+        )
 
     async def points(self):
         """
