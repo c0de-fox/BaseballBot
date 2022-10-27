@@ -10,6 +10,7 @@
     Discord channel
 """
 
+import pdb
 import uuid
 import datetime
 
@@ -23,22 +24,22 @@ from database.models import (
 )
 
 
-async def check_is_running(method, start_new_game=True):
+def check_is_running(method):
     """
     Decorator that determines if the game is running or not
     """
 
     async def wrapper(self):
 
-        if self.is_running and start_new_game:
+        if self.is_running and self.new_game:
             return await self.message.channel.send("A game is already running")
 
-        if not self.is_running and not start_new_game:
+        if not self.is_running and not self.new_game:
             return await self.message.channel.send("There is no game running")
 
         await method(self)
 
-    return await wrapper
+    return wrapper
 
 
 class GameManager:
@@ -52,13 +53,15 @@ class GameManager:
         # Only one game should run at at time
         self.is_running = False
 
-        self.commands = {
-            "ghostball": self.start,
-            "resolve": self.stop,
-            "guess": self.guess,
-            "points": self.points,
-            "help": self.help,
-        }
+        self.new_game = True
+
+        self.commands = [
+            ("braveball", self.start),
+            ("resolve", self.stop),
+            ("guess", self.guess),
+            ("points", self.points),
+            ("help", self.help),
+        ]
 
         self.game = Game
 
@@ -84,17 +87,20 @@ class GameManager:
         """
         database.close()
 
-    @check_is_running
+    # @check_is_running
     async def start(self):
         """
         Start command - Starts a new game if there isn't already one running
         """
+        # print(dir(self.message))
+
         self.is_running = True
+        self.new_game = False
 
         # game.pitch_value is unknown at the start of the game
-        self.game = Game.create(game_id=uuid.uuid4(), server_id=self.message.guild.id)
+        self.game = Game.create(game_id=uuid.uuid4(), server_id=self.message.channel.id)
 
-        await self.message.send("Send me your guesses with !guess <number>")
+        await self.message.channel.send("Send me your guesses with !guess <number>")
 
     def __stop_args__(self):
         pieces = self.message.content.split()
@@ -135,7 +141,7 @@ class GameManager:
 
         return pitch_value
 
-    @check_is_running(stop, start_new_game=False)
+    # @check_is_running
     async def stop(self):
         """
         Stop command - Stops the game if it is currently running,
@@ -214,7 +220,7 @@ class GameManager:
         self.is_running = False
         self.game = None
 
-    @check_is_running(guess, start_new_game=False)
+    # @check_is_running
     async def guess(self):
         """
         Guess command - Allows the player to add a guess to the current
@@ -227,19 +233,22 @@ class GameManager:
                 "Invalid value. It must be between 1 and 1000 inclusive"
             )
 
+        player_id, created = Player.get_or_create(
+            player_id=self.message.author.id, player_name="c0de"
+        )
+
         player_guess, created = Guess.get_or_create(
-            game_id=self.game.game_id,
-            player_id=self.message.author.id,
-            player_name=self.message.author.name,
+            guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player_id
         )
 
         player_guess.update({Guess.guess: value})
-        if created:
-            return await self.message.add_reaction(emoji="\N{THUMBS UP SIGN}")
+        # if created:
+        print(dir(self.message.add_reaction))
+        return await self.message.add_reaction("\N{THUMBS UP SIGN}")
 
-        return await self.message.channel.send(
-            f"<@{ str(self.message.author.id) }> your guess has been updated"
-        )
+        # return await self.message.channel.send(
+        #     f"<@{ str(self.message.author.id) }> your guess has been updated"
+        # )
 
     async def points(self):
         """
