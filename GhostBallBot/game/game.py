@@ -2,7 +2,7 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# pylint: disable=no-member
+# pylint: disable=no-member,unnecessary-lambda
 
 """
     A Context Manager / State Machine that keeps track of
@@ -11,6 +11,7 @@
 """
 
 import pdb
+import math
 import uuid
 import datetime
 
@@ -22,6 +23,7 @@ from database.models import (
     GuessModel as Guess,
     PlayerModel as Player,
 )
+from game.guess import ProcessGuess
 
 
 def check_is_running(method):
@@ -113,7 +115,7 @@ class GameManager:
 
         return None, False, None, None
 
-    async def close_game(self):
+    async def update_pitch_value(self):
         """Update game state database for closing arguments"""
         # Determine arguments
         pitch_value, has_batter, batter_id, batter_guess = self.__stop_args__()
@@ -132,12 +134,12 @@ class GameManager:
             ).save()
 
         # Save the pitch value
-        self.game.update(
+        Game.update(
             {
                 Game.pitch_value: pitch_value,
                 Game.date_ended: datetime.datetime.now(),
             }
-        )
+        ).where(Game.game_id == self.game.game_id).execute()
 
         return int(pitch_value)
 
@@ -148,28 +150,14 @@ class GameManager:
         saves the pitch value, and displays differences
         """
 
-        pitch_value = await self.close_game()
+        # How many valid guesses got placed?
+        guess_count = (
+            Guess.select().where((Guess.game.game_id == self.game.game_id)
+            & (Guess.guess > 0)
+        ).count())
 
-        # Start calculating difference
-
-        # Get all guesses for this game as a list of combo Guess + Player models,
-        # excluding invalid results, from lowest to highest
-        # http://docs.peewee-orm.com/en/latest/peewee/query_examples.html#joins-and-subqueries
-        records = (
-            Guess.select(
-                Guess.guess, Player.player_id, Player.player_name, Player.total_points
-            )
-            .join(Player)
-            .where(
-                (Guess.game_id == self.game.game_id)
-                & (Guess.guess > 0)
-                & (Guess.player_id == Player.player_id)
-            )
-            .order_by(Guess.guess)
-        )
-
-        # Minimum of 3 players
-        if len(records) < 1:
+        # Discard the game if there weren't enough players
+        if guess_count < 3:
             self.game = None
             self.is_running = False
             await self.message.channel.send(
@@ -181,41 +169,10 @@ class GameManager:
             + "PLAYER | GUESS | DIFFERENCE | POINTS GAINED | TOTAL POINTS\n"
         )
 
-        def get_difference(guess):
-            difference = abs(guess - pitch_value)
+        pitch_value = await self.update_pitch_value()
+        guess_processor = ProcessGuess(game=self, pitch_value=pitch_value)
 
-            if difference > 500:
-                return 1000 - difference
-
-            return difference
-
-        # Determine which guesses are closest and furthest from the pitch_value
-        guess_values = [record.guess for record in records]
-        closest_guess_value = min(
-            guess_values, key=lambda guess: get_difference(guess)
-        )
-        furthest_guess_value = max(
-            guess_values, key=lambda guess: get_difference(guess)
-        )
-
-        def get_difference_score():
-            # TODO: Calculate score based on scoring table
-            return 0
-
-        for record in records:
-            difference = abs(record.guess - pitch_value)
-            difference_score = get_difference_score()
-
-            # TODO: Update Guess.difference
-            # TODO: Update Player.total_points
-
-            if record.guess == closest_guess_value:
-                closest_player_id = record.player.player_id
-
-            if record.guess == furthest_guess_value:
-                furthest_player_id = record.player.player_id
-
-            message += f"{record.player.player_name} | {record.guess} | {difference} | {difference_score} | {record.player.total_points}\n"
+        message, closest_player_id, furthest_player_id = guess_processor.process_guesses()
 
         message += (
             f"\nCongrats <@{closest_player_id}>! You were the closest!\n"
@@ -241,15 +198,24 @@ class GameManager:
                 "Invalid value. It must be between 1 and 1000 inclusive"
             )
 
-        player_id, created = Player.get_or_create(
-            player_id=self.message.author.id, player_name="c0de"
+        # Create player if they don't exist
+        player, _ = Player.get_or_create(
+            player_id=self.message.author.id, player_name=self.message.author.name
         )
 
-        player_guess, created = Guess.get_or_create(
-            guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player_id
+        # Create the guess (or allow us to say update successful)
+        _, created = Guess.get_or_create(
+            guess_id=uuid.uuid4(),
+            game_id=self.game.game_id,
+            player_id=player.player_id,
+            player_name=player.player_name,
         )
 
-        Guess.update({"guess": value}).where((Guess.game_id==self.game.game_id) & (Guess.player_id==player_id)).execute()
+        Guess.update({"guess": value}).where(
+            (Guess.game_id == self.game.game_id)
+            & (Guess.player_id == self.message.author.id)
+        ).execute()
+
         if created:
             return await self.message.add_reaction("\N{THUMBS UP SIGN}")
 

@@ -18,7 +18,7 @@ import discord
 
 # Import game functions
 sys.path.append("..")
-import game
+from game.game import GameManager
 
 
 class GhostBallClient(discord.Client):
@@ -31,7 +31,7 @@ class GhostBallClient(discord.Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        with game.GameManager() as self.game:
+        with GameManager() as self.game:
             self.game.discord = self
 
     async def on_ready(self):
