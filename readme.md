@@ -32,3 +32,10 @@ The original code is in [src](./src/). Feel free to try to get this working.
 1. Bot should then connect to discord and start responding to commands defined in game.py
 
 
+## Roadmap
+
+Things that would be nice to add:
+
+* (yaml) Config file for tweaking various internals
+* Admin commands: table clear, record deletion, record update
+* Audit log of admin commands, and previous values for anything changed
