@@ -69,7 +69,7 @@ class GuessModel(BaseModel):
     guess_id = UUIDField(primary_key=True)
 
     player = ForeignKeyField(PlayerModel, backref="guesses")
-    game_id = ForeignKeyField(GameModel, backref="guesses")
+    game = ForeignKeyField(GameModel, backref="guesses")
 
     guess = IntegerField(default=0)
     difference = IntegerField(null=True)
@@ -80,4 +80,4 @@ def create_models():
     """Create database tables"""
 
     with database:
-        database.create_tables([GameModel, GuessModel, PlayerModel()])
+        database.create_tables([GameModel, GuessModel, PlayerModel])

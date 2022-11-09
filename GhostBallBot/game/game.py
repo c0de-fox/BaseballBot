@@ -152,9 +152,10 @@ class GameManager:
 
         # How many valid guesses got placed?
         guess_count = (
-            Guess.select().where((Guess.game.game_id == self.game.game_id)
-            & (Guess.guess > 0)
-        ).count())
+            Guess.select().join(Game)
+            .where((Guess.game.game_id == self.game.game_id) & (Guess.guess > 0))
+            .count()
+        )
 
         # Discard the game if there weren't enough players
         if guess_count < 3:
@@ -170,9 +171,13 @@ class GameManager:
         )
 
         pitch_value = await self.update_pitch_value()
-        guess_processor = ProcessGuess(game=self, pitch_value=pitch_value)
+        guess_processor = ProcessGuess(game=self, pitch_value=pitch_value, message=message)
 
-        message, closest_player_id, furthest_player_id = guess_processor.process_guesses()
+        (
+            message,
+            closest_player_id,
+            furthest_player_id,
+        ) = guess_processor.process_guesses()
 
         message += (
             f"\nCongrats <@{closest_player_id}>! You were the closest!\n"
@@ -205,15 +210,13 @@ class GameManager:
 
         # Create the guess (or allow us to say update successful)
         _, created = Guess.get_or_create(
-            guess_id=uuid.uuid4(),
-            game_id=self.game.game_id,
-            player_id=player.player_id,
-            player_name=player.player_name,
+            guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player.player_id
         )
 
         Guess.update({"guess": value}).where(
-            (Guess.game_id == self.game.game_id)
-            & (Guess.player_id == self.message.author.id)
+            # (Guess.game_id == self.game.game_id)
+            # &
+            (Guess.player_id == self.message.author.id)
         ).execute()
 
         if created:

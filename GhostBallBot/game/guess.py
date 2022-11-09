@@ -7,6 +7,7 @@ from database.models import (
     PlayerModel as Player,
 )
 
+
 class ProcessGuess:
     def __init__(self, game, **kwargs):
         self.game_manager = game
@@ -31,7 +32,7 @@ class ProcessGuess:
             )
             .join(Player)
             .where(
-                (Guess.game_id == self.game_manager.game.game_id)
+                (Guess.game == self.game_manager.game.game_id)
                 & (Guess.guess > 0)
                 & (Guess.player.player_id == Player.player_id)
             )
@@ -42,7 +43,7 @@ class ProcessGuess:
     def update_difference_value(self):
         # Update player's difference in guessed value
         Guess.update({"difference": self.difference}).where(
-            (Guess.game_id == self.game_manager.game.game_id)
+            (Guess.game.game_id == self.game_manager.game.game_id)
             & (Guess.player.player_id == self.guess.player.player_id)
             & (Guess.guess_id == self.guess.guess_id)
         ).execute()
@@ -60,7 +61,7 @@ class ProcessGuess:
     def get_difference(self, guess=None):
         """Difference calculation, includes "loop over" effect"""
         if not guess:
-            guess = self.guess
+            guess = self.guess.guess
 
         difference = abs(guess - self.pitch_value)
 
@@ -80,7 +81,7 @@ class ProcessGuess:
 
     def get_winner_loser(self):
         # Determine which guesses are closest and furthest from the pitch_value
-        guess_values = [record.guess for record in self.guesses]
+        guess_values = [record.guess for record in self.get_guesses()]
         # Closest to the pitch_value
         winner = min(guess_values, key=lambda guess: self.get_difference(guess))
         # Furthest from the pitch_value
