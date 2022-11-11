@@ -58,8 +58,8 @@ class ProcessGuess:
     def update_difference_value(self):
         """Store the difference between the player's guessed value and the pitch_value"""
         Guess.update({"difference": self.difference}).where(
-            (Guess.game.game_id == self.game_manager.game.game_id)
-            & (Guess.player.player_id == self.guess.player.player_id)
+            (Guess.game == self.game_manager.game.game_id)
+            & (Guess.player == self.guess.player.player_id)
             & (Guess.guess_id == self.guess.guess_id)
         ).execute()
 
