@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 discord = "*"
 peewee = "*"
-dateparser = "*"
 pylint = "*"
 black = "*"
 
