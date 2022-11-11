@@ -217,8 +217,8 @@ class GameManager:
         )
 
         Guess.update({"guess": value}).where(
-            # (Guess.game_id == self.game.game_id)
-            # &
+            (Guess.game.game_id == self.game.game_id)
+            &
             (Guess.player_id == self.message.author.id)
         ).execute()
 
