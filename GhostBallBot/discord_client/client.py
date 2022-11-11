@@ -18,7 +18,7 @@ import discord
 
 # Import game functions
 sys.path.append("..")
-from game.game import GameManager
+from game.manager import GameManager
 
 
 class GhostBallClient(discord.Client):
