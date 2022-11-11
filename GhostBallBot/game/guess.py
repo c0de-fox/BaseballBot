@@ -84,8 +84,6 @@ class ProcessGuess:
             return 1000 - difference
 
         self.difference = difference
-
-        self.update_difference_value()
         return self.difference
 
     def get_difference_score(self):
@@ -111,7 +109,6 @@ class ProcessGuess:
         else:
             self.difference_score = -5
 
-        self.update_player_total_points()
         return self.difference_score
 
     def get_winner_loser(self):
@@ -138,6 +135,8 @@ class ProcessGuess:
 
             difference = self.get_difference()
             difference_score = self.get_difference_score()
+            self.update_difference_value()
+            self.update_player_total_points()
 
             self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {(guess.player.total_points + difference_score)}\n"
 
