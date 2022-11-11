@@ -2,149 +2,53 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# pylint: disable=unnecessary-lambda,line-too-long
+# pylint: disable=missing-module-docstring
 
-"""
-    Handling all the players at the end of a game to make the game manager smaller
-"""
+import uuid
 
-import math
+from database.models import PlayerModel as Player, GuessModel as Guess
+from game.manager import BaseGameManager
 
-# Import game functions
-from database.models import (
-    GuessModel as Guess,
-    PlayerModel as Player,
-)
+class GuessManager(BaseGameManager):
+    """Commands that run when a player makes a guess"""
 
+    def __init__(self):
+        self.commands.append(("guess", self.guess))
+        super().__init__()
 
-class ProcessGuess:
-    """
-    A helper class for the GameManager that handles the
-    logic for all of the players at the end of a game
-    """
-
-    def __init__(self, game, pitch_value, message):
-        self.game_manager = game
-        self.message = message
-        self.pitch_value = pitch_value
-
-        self.difference = 0
-        self.difference_score = 0
-        self.guesses = [Guess]
-        self.guess = Guess
-
-    def get_guesses(self):
+    async def guess(self):
         """
-        Get all guesses for this game as a list of combo Guess + Player models,
-        excluding invalid results, from lowest to highest value
-        http://docs.peewee-orm.com/en/latest/peewee/query_examples.html#joins-and-subqueries
+        Guess command - Allows the player to add a guess to the current
+        running game
         """
-        self.guesses = (
-            Guess.select(
-                Guess.guess,
-                Player.player_id,
-                Player.player_name,
-                Player.total_points,
+
+        if not self.is_running:
+            return await self.message.channel.send("There is no game running")
+
+        value = int(self.message.content.split()[1])
+        if value < 1 or value > 1000:
+            return await self.message.channel.send(
+                "Invalid value. It must be between 1 and 1000 inclusive"
             )
-            .join(Player)
-            .where(
-                (Guess.game == self.game_manager.game.game_id)
-                & (Guess.guess > 0)
-                & (Guess.player.player_id == Player.player_id)
-            )
-            .order_by(Guess.guess)
+
+        # Create player if they don't exist
+        player, _ = Player.get_or_create(
+            player_id=self.message.author.id, player_name=self.message.author.name
         )
-        return self.guesses
 
-    def update_difference_value(self):
-        """Store the difference between the player's guessed value and the pitch_value"""
-        Guess.update({"difference": self.difference}).where(
-            (Guess.game == self.game_manager.game.game_id)
-            & (Guess.player == self.guess.player.player_id)
-            & (Guess.guess_id == self.guess.guess_id)
+        # Create the guess (or allow us to say update successful)
+        _, created = Guess.get_or_create(
+            guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player.player_id
+        )
+
+        Guess.update({"guess": value}).where(
+            (Guess.game == self.game.game_id)
+            & (Guess.player == self.message.author.id)
         ).execute()
 
-    def update_player_total_points(self):
-        """Update player's total score with how many points they won this round"""
-        Player.update(
-            {
-                "total_points": math.floor(
-                    self.guess.player.total_points + self.difference_score
-                )
-            }
-        ).where(Player.player_id == self.guess.player.player_id).execute()
+        if created:
+            return await self.message.add_reaction("\N{THUMBS UP SIGN}")
 
-    def get_difference(self, guess=None):
-        """Difference calculation, includes "loop over" effect"""
-        if not guess:
-            guess = self.guess.guess
-
-        difference = abs(guess - self.pitch_value)
-
-        if difference > 500:
-            return 1000 - difference
-
-        self.difference = difference
-        return self.difference
-
-    def get_difference_score(self):
-        """
-        Calculate points for the player based on how close
-        they are (within range of 0-500) to the pitch_value
-        """
-
-        if self.difference == 0:
-            self.difference_score = 15
-        elif self.difference > 0 and self.difference < 21:
-            self.difference_score = 8
-        elif self.difference > 20 and self.difference < 51:
-            self.difference_score = 5
-        elif self.difference > 50 and self.difference < 101:
-            self.difference_score = 3
-        elif self.difference > 100 and self.difference < 151:
-            self.difference_score = 2
-        elif self.difference > 150 and self.difference < 201:
-            self.difference_score = 1
-        elif self.difference > 200 and self.difference < 495:
-            self.difference_score = 0
-        else:
-            self.difference_score = -5
-
-        return self.difference_score
-
-    def get_winner_loser(self):
-        """Determine which guesses are closest and furthest from the pitch_value"""
-        guess_values = [record.guess for record in self.get_guesses()]
-        # Closest to the pitch_value
-        winner = min(guess_values, key=lambda guess: self.get_difference(guess))
-        # Furthest from the pitch_value
-        loser = max(guess_values, key=lambda guess: self.get_difference(guess))
-
-        return winner, loser
-
-    def process_guesses(self):
-        """
-        Iterates through the guesses for this game, and appends to the message string
-        the results of how well that player performed this round.
-
-        Uses the pitch_value to determine the difference from their guess to the correct score
-        """
-        winner, loser = self.get_winner_loser()
-
-        for guess in self.get_guesses():
-            self.guess = guess
-
-            difference = self.get_difference()
-            difference_score = self.get_difference_score()
-            self.update_difference_value()
-            self.update_player_total_points()
-
-            self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {(guess.player.total_points + difference_score)}\n"
-
-            if guess.guess == winner:
-                closest_player_id = guess.player.player_id
-
-            if guess.guess == loser:
-                furthest_player_id = guess.player.player_id
-
-        return self.message, closest_player_id, furthest_player_id
+        return await self.message.channel.send(
+            f"<@{ str(self.message.author.id) }> your guess has been updated"
+        )
