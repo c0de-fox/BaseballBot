@@ -74,7 +74,27 @@ class ProcessGuess:
         return self.difference
 
     def get_difference_score(self):
+        """
+        Calculate points for the player based on how close
+        they are (within range of 0-500) to the pitch_value
+        """
+
+        if self.difference == 0:
+            self.difference_score = 15
+        elif self.difference > 0 and self.difference < 21:
+            self.difference_score = 8
+        elif self.difference > 20 and self.difference < 51:
+            self.difference_score = 5
+        elif self.difference > 50 and self.difference < 101:
+            self.difference_score = 3
+        elif self.difference > 100 and self.difference < 151:
+            self.difference_score = 2
+        elif self.difference > 150 and self.difference < 201:
+            self.difference_score = 1
+        elif self.difference > 200 and self.difference < 495:
         self.difference_score = 0
+        else:
+            self.difference_score = -5
 
         self.update_player_total_points()
         return self.difference_score
