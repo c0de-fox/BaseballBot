@@ -2,7 +2,7 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# pylint: disable=no-member,unnecessary-lambda
+# pylint: disable=no-member
 
 """
     A Context Manager / State Machine that keeps track of
@@ -152,7 +152,8 @@ class GameManager:
 
         # How many valid guesses got placed?
         guess_count = (
-            Guess.select().join(Game)
+            Guess.select()
+            .join(Game)
             .where((Guess.game.game_id == self.game.game_id) & (Guess.guess > 0))
             .count()
         )
@@ -171,7 +172,9 @@ class GameManager:
         )
 
         pitch_value = await self.update_pitch_value()
-        guess_processor = ProcessGuess(game=self, pitch_value=pitch_value, message=message)
+        guess_processor = ProcessGuess(
+            game=self, pitch_value=pitch_value, message=message
+        )
 
         (
             message,

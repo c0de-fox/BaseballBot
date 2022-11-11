@@ -1,14 +1,27 @@
+#!/usr/bin/env python3
+# Copyright 2022 - c0de <c0de@c0de.dev>
+# Licensed under the MIT License (https://opensource.org/licenses/MIT)
+
+# pylint: disable=unnecessary-lambda,line-too-long
+
+"""
+    Handling backend database stuff for a player's guess to make the GameManager smaller
+"""
+
 import math
 
 # Import game functions
 from database.models import (
-    GameModel as Game,
     GuessModel as Guess,
     PlayerModel as Player,
 )
 
 
 class ProcessGuess:
+    """
+    A helper class for the GameManager that handles the logic behind a player's guess
+    """
+
     def __init__(self, game, **kwargs):
         self.game_manager = game
 
@@ -20,9 +33,11 @@ class ProcessGuess:
         self.guess = kwargs.get("guess")
 
     def get_guesses(self):
-        # Get all guesses for this game as a list of combo Guess + Player models,
-        # excluding invalid results, from lowest to highest
-        # http://docs.peewee-orm.com/en/latest/peewee/query_examples.html#joins-and-subqueries
+        """
+        Get all guesses for this game as a list of combo Guess + Player models,
+        excluding invalid results, from lowest to highest value
+        http://docs.peewee-orm.com/en/latest/peewee/query_examples.html#joins-and-subqueries
+        """
         self.guesses = (
             Guess.select(
                 Guess.guess,
@@ -41,7 +56,7 @@ class ProcessGuess:
         return self.guesses
 
     def update_difference_value(self):
-        # Update player's difference in guessed value
+        """Store the difference between the player's guessed value and the pitch_value"""
         Guess.update({"difference": self.difference}).where(
             (Guess.game.game_id == self.game_manager.game.game_id)
             & (Guess.player.player_id == self.guess.player.player_id)
@@ -49,7 +64,7 @@ class ProcessGuess:
         ).execute()
 
     def update_player_total_points(self):
-        # Update player's total score
+        """Update player's total score with how many points they won this round"""
         Player.update(
             {
                 "total_points": math.floor(
@@ -92,7 +107,7 @@ class ProcessGuess:
         elif self.difference > 150 and self.difference < 201:
             self.difference_score = 1
         elif self.difference > 200 and self.difference < 495:
-        self.difference_score = 0
+            self.difference_score = 0
         else:
             self.difference_score = -5
 
@@ -100,7 +115,7 @@ class ProcessGuess:
         return self.difference_score
 
     def get_winner_loser(self):
-        # Determine which guesses are closest and furthest from the pitch_value
+        """Determine which guesses are closest and furthest from the pitch_value"""
         guess_values = [record.guess for record in self.get_guesses()]
         # Closest to the pitch_value
         winner = min(guess_values, key=lambda guess: self.get_difference(guess))
