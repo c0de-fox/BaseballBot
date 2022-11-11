@@ -139,7 +139,7 @@ class ProcessGuess:
             difference = self.get_difference()
             difference_score = self.get_difference_score()
 
-            self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {guess.player.total_points}\n"
+            self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {(guess.player.total_points + difference_score)}\n"
 
             if guess.guess == winner:
                 closest_player_id = guess.player.player_id
