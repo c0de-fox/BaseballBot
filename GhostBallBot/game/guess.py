@@ -22,15 +22,15 @@ class ProcessGuess:
     A helper class for the GameManager that handles the logic behind a player's guess
     """
 
-    def __init__(self, game, **kwargs):
+    def __init__(self, game, pitch_value, message):
         self.game_manager = game
+        self.message = message
+        self.pitch_value = pitch_value
 
-        self.message = kwargs.get("message")
-        self.pitch_value = kwargs.get("pitch_value")
-        self.difference = kwargs.get("difference")
-        self.difference_score = kwargs.get("difference_score")
-        self.guesses = kwargs.get("guesses")
-        self.guess = kwargs.get("guess")
+        self.difference = 0
+        self.difference_score = 0
+        self.guesses = [Guess]
+        self.guess = Guess
 
     def get_guesses(self):
         """
