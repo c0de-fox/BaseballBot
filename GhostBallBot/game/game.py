@@ -234,15 +234,28 @@ class GameManager:
         Points command - returns a table ordered from highest to lowest
         of the players and their points
         """
-        # TODO
-        # value = self.message.content.split()
-        # try:
-        #     if len(value) > 1:
-        #         timestamp = dateparser.parse(value[1])
-        # except:
-        #     return await self.message.channel.send("Invalid timestamp. Try again")
+        message = (
+            "Players, who played recently, with their points highest to lowest\n\n"
+        )
+        message += "Player | Total Points | Last Played\n"
 
-        return await self.message.channel.send("Sorry, not implemented yet")
+        players = Player.select(
+            Player.player_name, Player.total_points, Player.last_update
+        ).order_by(Player.last_update.desc(), Player.total_points.desc())
+
+        for player in players:
+            message += (
+                " | ".join(
+                    [
+                        player.player_name,
+                        str(player.total_points),
+                        str(player.last_update)[:-10],
+                    ]
+                )
+                + "\n"
+            )
+
+        return await self.message.channel.send(message)
 
     async def help(self):
         """help command"""
