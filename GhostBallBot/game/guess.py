@@ -5,7 +5,7 @@
 # pylint: disable=unnecessary-lambda,line-too-long
 
 """
-    Handling backend database stuff for a player's guess to make the GameManager smaller
+    Handling all the players at the end of a game to make the game manager smaller
 """
 
 import math
@@ -19,7 +19,8 @@ from database.models import (
 
 class ProcessGuess:
     """
-    A helper class for the GameManager that handles the logic behind a player's guess
+    A helper class for the GameManager that handles the
+    logic for all of the players at the end of a game
     """
 
     def __init__(self, game, pitch_value, message):
