@@ -2,7 +2,7 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# pylint: disable=no-member
+# pylint: disable=no-member,not-an-iterable
 
 """
     A Context Manager / State Machine that keeps track of
@@ -10,8 +10,6 @@
     Discord channel
 """
 
-import pdb
-import math
 import uuid
 import datetime
 
@@ -162,7 +160,7 @@ class GameManager:
         if guess_count < 3:
             self.game = None
             self.is_running = False
-            await self.message.channel.send(
+            return await self.message.channel.send(
                 ("Play closed!\n" + "However, there were not enough participants.")
             )
 
@@ -217,9 +215,8 @@ class GameManager:
         )
 
         Guess.update({"guess": value}).where(
-            (Guess.game.game_id == self.game.game_id)
-            &
-            (Guess.player_id == self.message.author.id)
+            (Guess.game == self.game.game_id)
+            & (Guess.player_id == self.message.author.id)
         ).execute()
 
         if created:
