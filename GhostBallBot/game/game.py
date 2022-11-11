@@ -24,24 +24,6 @@ from database.models import (
 from game.guess import ProcessGuess
 
 
-def check_is_running(method):
-    """
-    Decorator that determines if the game is running or not
-    """
-
-    async def wrapper(self):
-
-        if self.is_running and self.new_game:
-            return await self.message.channel.send("A game is already running")
-
-        if not self.is_running and not self.new_game:
-            return await self.message.channel.send("There is no game running")
-
-        await method(self)
-
-    return wrapper
-
-
 class GameManager:
     """
     The game state class
@@ -52,8 +34,6 @@ class GameManager:
     def __init__(self):
         # Only one game should run at at time
         self.is_running = False
-
-        self.new_game = True
 
         self.commands = [
             ("braveball", self.start),
@@ -87,15 +67,15 @@ class GameManager:
         """
         database.close()
 
-    # @check_is_running
     async def start(self):
         """
         Start command - Starts a new game if there isn't already one running
         """
-        # print(dir(self.message))
+
+        if self.is_running:
+            return await self.message.channel.send("A game is already running")
 
         self.is_running = True
-        self.new_game = False
 
         # game.pitch_value is unknown at the start of the game
         self.game = Game.create(game_id=uuid.uuid4(), server_id=self.message.channel.id)
@@ -141,12 +121,14 @@ class GameManager:
 
         return int(pitch_value)
 
-    # @check_is_running
     async def stop(self):
         """
         Stop command - Stops the game if it is currently running,
         saves the pitch value, and displays differences
         """
+
+        if not self.is_running:
+            return await self.message.channel.send("There is no game running")
 
         # How many valid guesses got placed?
         guess_count = (
@@ -191,12 +173,14 @@ class GameManager:
         self.is_running = False
         self.game = None
 
-    # @check_is_running
     async def guess(self):
         """
         Guess command - Allows the player to add a guess to the current
         running game
         """
+
+        if not self.is_running:
+            return await self.message.channel.send("There is no game running")
 
         value = int(self.message.content.split()[1])
         if value < 1 or value > 1000:
@@ -232,7 +216,7 @@ class GameManager:
         of the players and their points
         """
         message = (
-            "Players, who played recently, with their points highest to lowest\n\n"
+            "\nPlayers, who played recently, with their points highest to lowest\n\n"
         )
         message += "Player | Total Points | Last Played\n"
 
