@@ -11,8 +11,8 @@ class HelpManager(BaseGameManager):
     """Commands that run when a player asks for help"""
 
     def __init__(self):
-        self.commands.append(("help", self.help))
         super().__init__()
+        self.commands.append(("help", self.help))
 
     async def help(self):
         """help command - Sends a DM to the requesting user with available commands"""

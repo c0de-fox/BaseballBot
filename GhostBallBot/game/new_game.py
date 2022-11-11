@@ -14,8 +14,8 @@ class NewGameManager(BaseGameManager):
     """Commands that run at the start of a new game"""
 
     def __init__(self):
-        self.commands.append(("braveball", self.start))
         super().__init__()
+        self.commands.append(("braveball", self.start))
 
     async def start(self):
         """

@@ -12,8 +12,8 @@ class PointsManager(BaseGameManager):
     """Commands that run when a player makes a guess"""
 
     def __init__(self):
-        self.commands.append(("points", self.points))
         super().__init__()
+        self.commands.append(("points", self.points))
 
     async def points(self):
         """

@@ -15,8 +15,8 @@ class EndGameManager(BaseGameManager):
     """Commands that run at the end of a game"""
 
     def __init__(self):
-        self.commands.append(("resolve", self.stop))
         super().__init__()
+        self.commands.append(("resolve", self.stop))
 
     def __stop_args__(self):
         pieces = self.message.content.split()

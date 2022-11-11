@@ -14,8 +14,8 @@ class GuessManager(BaseGameManager):
     """Commands that run when a player makes a guess"""
 
     def __init__(self):
-        self.commands.append(("guess", self.guess))
         super().__init__()
+        self.commands.append(("guess", self.guess))
 
     async def guess(self):
         """
