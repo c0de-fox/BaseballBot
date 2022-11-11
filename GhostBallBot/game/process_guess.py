@@ -6,7 +6,6 @@
 
 import math
 
-# Import game functions
 from database.models import (
     GuessModel as Guess,
     PlayerModel as Player,
