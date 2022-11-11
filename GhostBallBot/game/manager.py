@@ -18,6 +18,7 @@ from game.guess import GuessManager
 from game.points import PointsManager
 from game.help import HelpManager
 
+
 class BaseGameManager:
     """Base Game Manager for each Game Manager class to inherit"""
 
@@ -51,7 +52,10 @@ class BaseGameManager:
         """
         database.close()
 
-class GameManager(NewGameManager, EndGameManager, GuessManager, PointsManager, HelpManager):
+
+class GameManager(
+    NewGameManager, EndGameManager, GuessManager, PointsManager, HelpManager
+):
     """
     Represents what this bot is able to do on a channel (or DMs)
     """

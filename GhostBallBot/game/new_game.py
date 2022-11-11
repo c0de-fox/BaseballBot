@@ -9,6 +9,7 @@ import uuid
 from database.models import GameModel as Game
 from game.manager import BaseGameManager
 
+
 class NewGameManager(BaseGameManager):
     """Commands that run at the start of a new game"""
 

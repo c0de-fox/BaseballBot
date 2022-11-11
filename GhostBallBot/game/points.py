@@ -7,6 +7,7 @@
 from database.models import PlayerModel as Player
 from game.manager import BaseGameManager
 
+
 class PointsManager(BaseGameManager):
     """Commands that run when a player makes a guess"""
 

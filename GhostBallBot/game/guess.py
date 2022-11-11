@@ -9,6 +9,7 @@ import uuid
 from database.models import PlayerModel as Player, GuessModel as Guess
 from game.manager import BaseGameManager
 
+
 class GuessManager(BaseGameManager):
     """Commands that run when a player makes a guess"""
 
@@ -42,8 +43,7 @@ class GuessManager(BaseGameManager):
         )
 
         Guess.update({"guess": value}).where(
-            (Guess.game == self.game.game_id)
-            & (Guess.player == self.message.author.id)
+            (Guess.game == self.game.game_id) & (Guess.player == self.message.author.id)
         ).execute()
 
         if created:

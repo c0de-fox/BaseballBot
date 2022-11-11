@@ -6,6 +6,7 @@
 
 from game.manager import BaseGameManager
 
+
 class HelpManager(BaseGameManager):
     """Commands that run when a player asks for help"""
 

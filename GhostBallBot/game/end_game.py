@@ -10,6 +10,7 @@ from database.models import GameModel as Game, GuessModel as Guess
 from game.manager import BaseGameManager
 from game.process_guess import ProcessGuess
 
+
 class EndGameManager(BaseGameManager):
     """Commands that run at the end of a game"""
 
