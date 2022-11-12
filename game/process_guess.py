@@ -77,7 +77,7 @@ class ProcessGuess:
         difference = abs(guess - self.pitch_value)
 
         if difference > 500:
-            return 1000 - difference
+            difference = 1000 - difference
 
         self.difference = difference
         return self.difference
