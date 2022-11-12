@@ -5,7 +5,7 @@
 # pylint: disable=not-an-iterable,missing-module-docstring
 
 from database.models import PlayerModel as Player
-from game.manager import BaseGameManager
+from game.base import BaseGameManager
 
 
 class PointsManager(BaseGameManager):

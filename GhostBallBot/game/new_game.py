@@ -7,7 +7,7 @@
 import uuid
 
 from database.models import GameModel as Game
-from game.manager import BaseGameManager
+from game.base import BaseGameManager
 
 
 class NewGameManager(BaseGameManager):

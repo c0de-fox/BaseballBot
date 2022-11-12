@@ -4,7 +4,7 @@
 
 # pylint: disable=missing-module-docstring
 
-from game.manager import BaseGameManager
+from game.base import BaseGameManager
 
 
 class HelpManager(BaseGameManager):

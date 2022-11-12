@@ -7,7 +7,7 @@
 import datetime
 
 from database.models import GameModel as Game, GuessModel as Guess
-from game.manager import BaseGameManager
+from game.base import BaseGameManager
 from game.process_guess import ProcessGuess
 
 

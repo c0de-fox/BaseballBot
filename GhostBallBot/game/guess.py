@@ -7,7 +7,7 @@
 import uuid
 
 from database.models import PlayerModel as Player, GuessModel as Guess
-from game.manager import BaseGameManager
+from game.base import BaseGameManager
 
 
 class GuessManager(BaseGameManager):

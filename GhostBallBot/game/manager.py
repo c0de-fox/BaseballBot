@@ -10,47 +10,11 @@
     Discord channel
 """
 
-from database.models import database, GameModel as Game
-
 from game.new_game import NewGameManager
 from game.end_game import EndGameManager
 from game.guess import GuessManager
 from game.points import PointsManager
 from game.help import HelpManager
-
-
-class BaseGameManager:
-    """Base Game Manager for each Game Manager class to inherit"""
-
-    def __init__(self):
-        # Only one game should run at at time
-        self.is_running = False
-
-        self.commands = []
-
-        self.game = Game
-
-        # Discord message
-        self.message = None
-
-        # Discord client instance
-        self.discord = None
-
-    def __enter__(self):
-        """
-        Allows use of `with Game() as game` for try/except statements
-        (https://peps.python.org/pep-0343/)
-        """
-
-        database.connect()
-        return self
-
-    def __exit__(self, exception_type, exception_value, exception_traceback):
-        """
-        Automagically close the database
-        when this class has ended execution
-        """
-        database.close()
 
 
 class GameManager(
