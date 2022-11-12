@@ -1,8 +1,6 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# Multistage docker file, using a very minimal 17.6 MB base image
-# Results in a cross-platform 76 MB image including all dependencies
 # Build with: docker build -t ghotballbot:<version> .
 # Run with: docker run -it
 
