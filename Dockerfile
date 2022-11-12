@@ -6,13 +6,13 @@
 
 FROM python:3.10-alpine3.16 AS build
 
-RUN pip install discord peewee
-COPY . /app
+RUN pip install --no-cache-dir discord peewee
+WORKDIR /app
+COPY . .
 
 FROM build AS run
 
 ENV discord_token ""
 ENV database_path "/tmp/ghostball.db"
 
-WORKDIR /app
 CMD ["python", "/app/main.py"]
