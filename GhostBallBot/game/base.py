@@ -6,6 +6,7 @@
 
 from database.models import database, GameModel as Game
 
+
 class BaseGameManager:
     """Base Game Manager for each Game Manager class to inherit"""
 
