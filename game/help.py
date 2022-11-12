@@ -19,6 +19,7 @@ class HelpManager(BaseGameManager):
 
         help_message = (
             "Braveball commands\n"
+            + "ping - Will respond 'pong' if the bot is alive\n"
             + "!braveball - Start new game\n"
             + "!guess - While a game is running, add a guess"
             + " (or update an existing one) from 1-1000\n"
