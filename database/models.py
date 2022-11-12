@@ -22,7 +22,7 @@ from peewee import (
 )
 
 # User can provide path to database, or it will be put next to main.py
-DATABASE = os.environ.get("database_path", os.getcwd() + "/ghostball.db")
+DATABASE = os.environ.get("database_path", os.getcwd() + "/baseball.db")
 database = SqliteDatabase(DATABASE, pragmas={"foreign_keys": 1})
 
 

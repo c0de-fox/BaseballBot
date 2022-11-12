@@ -7,7 +7,7 @@
 import os
 
 from discord import Intents
-from discord_client.client import GhostBallClient
+from discord_client.client import BaseBallClient
 from database.models import DATABASE, database, create_models
 
 if __name__ == "__main__":
@@ -17,5 +17,5 @@ if __name__ == "__main__":
         create_models()
         database.close()
 
-    client = GhostBallClient(intents=Intents.all())
+    client = BaseBallClient(intents=Intents.all())
     client.run(os.environ.get("discord_token"))

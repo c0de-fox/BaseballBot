@@ -5,7 +5,7 @@
 # pylint: disable=wrong-import-position
 
 """
-    A discord bot that hosts Ghostball/Braveball.
+    A discord bot that hosts Baseball/Braveball.
 
     A discord game where players guess the pitch speed
     from a fantasy baseball pitcher, and whoever is
@@ -21,7 +21,7 @@ sys.path.append("..")
 from game.manager import GameManager
 
 
-class GhostBallClient(discord.Client):
+class BaseBallClient(discord.Client):
     """
     Implementation of a Discord client that will monitor
     a channel for messages, and if it recieves a message
