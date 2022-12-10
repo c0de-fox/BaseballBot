@@ -2,7 +2,7 @@
 # Copyright 2022 - c0de <c0de@c0de.dev>
 # Licensed under the MIT License (https://opensource.org/licenses/MIT)
 
-# pylint: disable=missing-module-docstring
+# pylint: disable=missing-module-docstring,too-few-public-methods
 
 from database.models import GameModel as Game
 from game.base import BaseGameManager
