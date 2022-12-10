@@ -27,7 +27,7 @@ class HelpManager(BaseGameManager):
             + " You can also add a batter's guess with: "
             + "!resolve <value> <discord id #> <guess>\n"
             + "!points - Shows a table of the most recent players, and their scores\n"
-            + "!reset - Removes all the guesses"
+            + "!reset - Removes all players and total points"
             + "!help - Shows this message"
         )
 
