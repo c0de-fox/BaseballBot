@@ -8,6 +8,7 @@ discord = "*"
 peewee = "*"
 pylint = "*"
 black = "*"
+beautifultable = "*"
 
 [dev-packages]
 
