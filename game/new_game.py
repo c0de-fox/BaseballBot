@@ -4,8 +4,6 @@
 
 # pylint: disable=missing-module-docstring
 
-import uuid
-
 from database.models import GameModel as Game
 from game.base import BaseGameManager
 
@@ -28,6 +26,6 @@ class NewGameManager(BaseGameManager):
         self.is_running = True
 
         # game.pitch_value is unknown at the start of the game
-        self.game = Game.create(game_id=uuid.uuid4(), server_id=self.message.channel.id)
+        self.game = Game.create(server_id=self.message.channel.id)
 
         await self.message.channel.send("Send me your guesses with !guess <number>")

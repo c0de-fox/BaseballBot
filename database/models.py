@@ -9,6 +9,7 @@
 """
 
 import os
+import uuid
 import datetime
 
 from peewee import (
@@ -55,7 +56,7 @@ class PlayerModel(BaseModel):
 class GameModel(BaseModel):
     """Games that are ran"""
 
-    game_id = UUIDField(primary_key=True)
+    game_id = UUIDField(primary_key=True, default=uuid.uuid4)
     server_id = IntegerField()
 
     pitch_value = IntegerField(null=True)
@@ -66,7 +67,7 @@ class GameModel(BaseModel):
 class GuessModel(BaseModel):
     """Guesses for a particular game"""
 
-    guess_id = UUIDField(primary_key=True)
+    guess_id = UUIDField(primary_key=True, default=uuid.uuid4)
 
     player = ForeignKeyField(PlayerModel, backref="guesses")
     game = ForeignKeyField(GameModel, backref="guesses")
