@@ -134,15 +134,7 @@ class ProcessGuess:
             self.update_difference_value()
             self.update_player_total_points()
 
-            self.message.rows.append(
-                [
-                    guess.player.player_name,
-                    guess.guess,
-                    difference,
-                    difference_score,
-                    guess.player.total_points + difference_score,
-                ]
-            )
+            self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {(guess.player.total_points + difference_score)}\n"
 
             if guess.guess == winner:
                 closest_player_id = guess.player.player_id

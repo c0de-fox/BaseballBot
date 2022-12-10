@@ -6,8 +6,6 @@
 
 import datetime
 
-from beautifultable import BeautifulTable
-
 from database.models import GameModel as Game, GuessModel as Guess
 from game.base import BaseGameManager
 from game.process_guess import ProcessGuess
@@ -84,33 +82,26 @@ class EndGameManager(BaseGameManager):
                 ("Play closed!\n" + "However, there were not enough participants.")
             )
 
-        message = "Closed this play! Here are the results:"
-        message += "\n```\n"
-
-        table = BeautifulTable()
-        table.column_headers = [
-            "PLAYER",
-            "GUESS",
-            "DIFFERENCE",
-            "POINTS GAINED",
-            "TOTAL POINTS",
-        ]
+        message = (
+            "Closed this play! Here are the results\n"
+            + "PLAYER | GUESS | DIFFERENCE | POINTS GAINED | TOTAL POINTS\n"
+        )
 
         pitch_value = await self.update_pitch_value()
         guess_processor = ProcessGuess(
-            game=self, pitch_value=pitch_value, message=table
+            game=self, pitch_value=pitch_value, message=message
         )
 
         (
-            table,
+            message,
             closest_player_id,
             furthest_player_id,
         ) = guess_processor.process_guesses()
 
-        message += str(table)
-        message += "\n```\n"
-        message += f"Congrats <@{closest_player_id}>! You were the closest!\n"
-        message += f"Sorry <@{furthest_player_id}>, you were way off\n"
+        message += (
+            f"\nCongrats <@{closest_player_id}>! You were the closest!\n"
+            + f"Sorry <@{furthest_player_id}>, you were way off"
+        )
 
         await self.message.channel.send(message)
 

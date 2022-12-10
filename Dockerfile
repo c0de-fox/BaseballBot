@@ -6,7 +6,7 @@
 
 FROM python:3.10-alpine3.16 AS build
 
-RUN pip install --no-cache-dir discord peewee beautifultable
+RUN pip install --no-cache-dir discord peewee
 WORKDIR /app
 COPY . .
 
