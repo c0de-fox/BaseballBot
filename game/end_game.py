@@ -40,10 +40,11 @@ class EndGameManager(BaseGameManager):
 
         if has_batter:
             player_id = batter_id[3:]
+            player_name = await self.discord.get_user(int(player_id).name)
             Guess.create(
                 game_id=self.game.game_id,
                 player_id=player_id,
-                player_name=self.discord.get_user(int(player_id).name),
+                player_name=player_name,
                 guess=int(batter_guess),
             ).save()
 
