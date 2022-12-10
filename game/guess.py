@@ -4,8 +4,6 @@
 
 # pylint: disable=missing-module-docstring
 
-import uuid
-
 from database.models import PlayerModel as Player, GuessModel as Guess
 from game.base import BaseGameManager
 
