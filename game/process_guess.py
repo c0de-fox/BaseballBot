@@ -47,7 +47,7 @@ class ProcessGuess:
                 & (Guess.guess > 0)
                 & (Guess.player.player_id == Player.player_id)
             )
-            .order_by(Guess.guess)
+            .order_by(Guess.difference)
         )
         return self.guesses
 
