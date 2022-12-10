@@ -4,7 +4,7 @@
 
 # pylint: disable=missing-module-docstring,too-few-public-methods
 
-from database.models import GuessModel as Guess
+from database.models import PlayerModel as Player
 from game.base import BaseGameManager
 
 
@@ -16,7 +16,7 @@ class ResetManager(BaseGameManager):
         self.commands.append(("reset", self.reset))
 
     async def reset(self):
-        """Reset command purges all guesses"""
-        Guess.delete().where(True).execute()
+        """Reset command purges all players (removes total points)"""
+        Player.delete().where(True).execute()
 
         return await self.message.channel.send("ok")
