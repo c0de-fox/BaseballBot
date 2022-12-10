@@ -39,7 +39,7 @@ class GuessManager(BaseGameManager):
 
         # Create the guess (or allow us to say update successful)
         _, created = Guess.get_or_create(
-            guess_id=uuid.uuid4(), game_id=self.game.game_id, player_id=player.player_id
+            game_id=self.game.game_id, player_id=player.player_id
         )
 
         Guess.update({"guess": value}).where(
