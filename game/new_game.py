@@ -13,7 +13,7 @@ class NewGameManager(BaseGameManager):
 
     def __init__(self):
         super().__init__()
-        self.commands.append(("braveball", self.start))
+        self.commands.append(("bb", self.start))
 
     async def start(self):
         """

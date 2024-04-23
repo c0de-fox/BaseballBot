@@ -9,7 +9,7 @@ from game.base import BaseGameManager
 
 
 class PointsManager(BaseGameManager):
-    """Commands that run when a player makes a guess"""
+    """Commands that run when a player wants to view the session leaderboard"""
 
     def __init__(self):
         super().__init__()
@@ -27,7 +27,7 @@ class PointsManager(BaseGameManager):
 
         players = Player.select(
             Player.player_name, Player.total_points, Player.last_update
-        ).order_by(Player.last_update.desc(), Player.total_points.desc())
+        ).order_by(Player.total_points.desc())
 
         for player in players:
             message += (

@@ -40,6 +40,7 @@ class ProcessGuess:
                 Player.player_id,
                 Player.player_name,
                 Player.total_points,
+                Guess.difference
             )
             .join(Player)
             .where(
@@ -71,13 +72,24 @@ class ProcessGuess:
 
     def get_difference(self, guess=None):
         """Difference calculation, includes "loop over" effect"""
+        self.game_manager.logger.debug("get_difference")
+
+        self.game_manager.logger.debug(guess if guess else "")
+
         if not guess:
             guess = self.guess.guess
 
+            self.game_manager.logger.debug(f"guess: {guess}")
+
         difference = abs(guess - self.pitch_value)
+
+        self.game_manager.logger.debug(f"Difference:{difference}")
 
         if difference > 500:
             difference = 1000 - difference
+
+            self.game_manager.logger.debug("Diff loop over 500")
+            self.game_manager.logger.debug(f"{difference}")
 
         self.difference = difference
         return self.difference
@@ -88,32 +100,51 @@ class ProcessGuess:
         they are (within range of 0-500) to the pitch_value
         """
 
+        self.game_manager.logger.debug("> get_difference_score")
+        self.game_manager.logger.debug(self.difference)
+
         if self.difference == 0:
             self.difference_score = 15
+            self.game_manager.logger.debug("0 Diff")
         elif self.difference > 0 and self.difference < 21:
             self.difference_score = 8
+            self.game_manager.logger.debug("0 to 20 diff")
         elif self.difference > 20 and self.difference < 51:
             self.difference_score = 5
+            self.game_manager.logger.debug("21 to 50 Diff")
         elif self.difference > 50 and self.difference < 101:
             self.difference_score = 3
+            self.game_manager.logger.debug("51 to 100 Diff")
         elif self.difference > 100 and self.difference < 151:
             self.difference_score = 2
+            self.game_manager.logger.debug("101 to 150 Diff")
         elif self.difference > 150 and self.difference < 201:
             self.difference_score = 1
+            self.game_manager.logger.debug("151 to 200 Diff")
         elif self.difference > 200 and self.difference < 495:
             self.difference_score = 0
+            self.game_manager.logger.debug("Diff too big")
         else:
             self.difference_score = -5
+            self.game_manager.logger.debug("Big succ")
 
         return self.difference_score
 
     def get_winner_loser(self):
         """Determine which guesses are closest and furthest from the pitch_value"""
+
+        self.game_manager.logger.debug("> get_winner_loser")
+
         guess_values = [record.guess for record in self.get_guesses()]
+        self.game_manager.logger.debug(", ".join([str(guess) for guess in guess_values]))
+
         # Closest to the pitch_value
         winner = min(guess_values, key=lambda guess: self.get_difference(guess))
+        self.game_manager.logger.debug(f"winner: {winner}")
+
         # Furthest from the pitch_value
         loser = max(guess_values, key=lambda guess: self.get_difference(guess))
+        self.game_manager.logger.debug(f"loser: {loser}")
 
         return winner, loser
 
@@ -129,6 +160,9 @@ class ProcessGuess:
         for guess in self.get_guesses():
             self.guess = guess
 
+            self.game_manager.logger.debug(f"Current guess: {guess}")
+
+
             difference = self.get_difference()
             difference_score = self.get_difference_score()
             self.update_difference_value()
@@ -136,10 +170,13 @@ class ProcessGuess:
 
             self.message += f"{guess.player.player_name} | {guess.guess} | {difference} | {difference_score} | {(guess.player.total_points + difference_score)}\n"
 
+            self.game_manager.logger.debug(f"new total: {(guess.player.total_points + difference_score)}")
+
             if guess.guess == winner:
                 closest_player_id = guess.player.player_id
 
             if guess.guess == loser:
                 furthest_player_id = guess.player.player_id
 
+        self.game_manager.logger.debug(self.message)
         return self.message, closest_player_id, furthest_player_id

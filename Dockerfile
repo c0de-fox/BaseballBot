@@ -15,4 +15,4 @@ FROM build AS run
 ENV discord_token ""
 ENV database_path "/tmp/baseball.db"
 
-CMD ["python", "/app/main.py"]
+CMD ["python", "-u", "/app/main.py"]

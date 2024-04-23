@@ -24,10 +24,9 @@ class HelpManager(BaseGameManager):
             + "!guess - While a game is running, add a guess"
             + " (or update an existing one) from 1-1000\n"
             + "!resolve <value> - 1-1000 to resolve the game\n"
-            + " You can also add a batter's guess with: "
-            + "!resolve <value> <discord id #> <guess>\n"
+            + "!clear - Clear the session scoreboard\n"
             + "!points - Shows a table of the most recent players, and their scores\n"
-            + "!reset - Removes all players and total points"
+            + "!reset - Removes all players and total points\n"
             + "!help - Shows this message"
         )
 

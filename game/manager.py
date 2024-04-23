@@ -16,10 +16,11 @@ from game.guess import GuessManager
 from game.points import PointsManager
 from game.reset import ResetManager
 from game.help import HelpManager
+from game.clear import ClearManager
 
 
 class GameManager(
-    NewGameManager, EndGameManager, GuessManager, PointsManager, ResetManager, HelpManager
+    NewGameManager, EndGameManager, GuessManager, PointsManager, ResetManager, HelpManager, ClearManager
 ):
     """
     Represents what this bot is able to do on a channel (or DMs)

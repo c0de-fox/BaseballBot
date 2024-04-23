@@ -4,6 +4,8 @@
 
 # pylint: disable=missing-module-docstring
 
+import logging
+
 from database.models import database, GameModel as Game
 
 
@@ -23,6 +25,18 @@ class BaseGameManager:
 
         # Discord client instance
         self.discord = None
+
+        logger = logging.getLogger()
+        console = logging.StreamHandler()
+
+        format_str = '%(asctime)s\t%(levelname)s -- %(processName)s %(filename)s:%(lineno)s -- %(message)s'
+        console.setFormatter(logging.Formatter(format_str))
+
+        logger.addHandler(console)
+
+        logger.setLevel(logging.DEBUG)
+
+        self.logger = logger
 
     def __enter__(self):
         """
